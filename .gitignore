@@ -70,3 +70,7 @@ yarn.lock
 /android/fastlane/metadata/**/*
 
 /android/vendor/**/*
+capacitor_plugins/**/*
+capacitor_plugins/sslhandler/**/*
+capacitor_plugins/sslhandler/android/.gradle/8.2.1/checksums/checksums.lock
+capacitor_plugins/sslhandler/src/*.*
