@@ -40,28 +40,30 @@ function Sync-PathFromRegistry {
 
 <#
 .SYNOPSIS
-  从候选 RubyGems 国内镜像中逐个探测，返回第一个当前可连通的镜像地址。
+  从候选 RubyGems 国内镜像中逐个探测，返回第一个真正可用（compact index 不重定向）的镜像。
 .OUTPUTS
-  [string] 可用镜像 URL；全部不可达时返回 $null。
+  [string] 可用镜像 URL；全部不可用时返回 $null。
 .NOTES
-  写死单一镜像的问题：遇到该镜像临时被拒/抖动就整体失败。这里运行时探测，
-  哪个通用哪个，全部不通才放弃（由调用方决定是否回退原站）。
+  关键坑（实测）：USTC/清华/ruby-china 的 compact index /info/<gem> 端点会 302
+  重定向回 rubygems.org —— 在国内等于死路，Bundler 跟着跳转后连官方源超时。
+  curl -I 默认跟随重定向会拿到 200 假象，必须“禁止跟随重定向”探测才能识破。
+  腾讯云、华为云镜像的 /info 端点是真 200、不重定向，实测可完整跑通 bundle install。
 #>
 function Select-GemMirror {
   $candidates = @(
-    'https://mirrors.ustc.edu.cn/rubygems/',
-    'https://mirrors.tuna.tsinghua.edu.cn/rubygems/',
-    'https://gems.ruby-china.com/'
+    'https://mirrors.cloud.tencent.com/rubygems/',
+    'https://repo.huaweicloud.com/repository/rubygems/'
   )
   foreach ($m in $candidates) {
     try {
-      # 探测 compact index 的 versions 端点：镜像要直接当 source 用，必须支持
-      # compact index（否则 Bundler 仍回落到 api.rubygems.org 解析依赖）。
-      # 阿里云镜像的 /versions 返回 404、不支持 compact index，故不列入候选。
-      $probe = ($m.TrimEnd('/')) + '/versions'
+      # 探测 /info/fastlane（compact index 的依赖解析端点）。必须禁止自动重定向：
+      # 部分镜像该端点会 302 跳回 rubygems.org，跟随后会拿到 200 的假象。
+      # 只有“直接 200、无 Location 跳转”的镜像才能真正离线解析依赖。
+      $probe = ($m.TrimEnd('/')) + '/info/fastlane'
       $req = [System.Net.HttpWebRequest]::Create($probe)
       $req.Method = 'HEAD'
       $req.Timeout = 8000
+      $req.AllowAutoRedirect = $false
       $resp = $req.GetResponse()
       $code = [int]$resp.StatusCode
       $resp.Close()
@@ -69,6 +71,7 @@ function Select-GemMirror {
         Write-Ok "选用 RubyGems 镜像：$m"
         return $m
       }
+      Write-Warn "镜像 $m 的 /info 返回 $code（疑似重定向），尝试下一个"
     } catch {
       Write-Warn "镜像不可用，尝试下一个：$m"
     }
