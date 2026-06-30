@@ -3,11 +3,12 @@ name: CI
 on:
   workflow_call:
   push:
-    branches:
-      - 'main'
     tags:
       - '*'
-  pull_request:
+  release:
+    types:
+      - created
+      - published
 
 jobs:
   determine-version:
