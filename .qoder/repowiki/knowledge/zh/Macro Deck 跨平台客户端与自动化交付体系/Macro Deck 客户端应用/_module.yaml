@@ -5,4 +5,7 @@ scope:
     - src/
 source_files: []
 depends_on: []
-related_to: []
+related_to:
+    - path: android
+    - path: ios
+    - path: scripts
