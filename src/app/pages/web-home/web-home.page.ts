@@ -62,20 +62,54 @@ export class WebHomePage implements OnInit {
   }
 
   /**
-   * 连接到同源的 Macro Deck 服务器
-   * 根据当前页面的协议和主机地址自动构建 WebSocket 连接地址
+   * 连接到 Macro Deck 服务器
+   * 优先使用 URL 查询参数 ?server= 指定的地址，缺省时回退到同源服务器
    */
   async connect() {
     clearInterval(this.interval);
     this.connectionLost = false;
-    const baseUrl = this.document.baseURI;
-    const urlParts = baseUrl.split('/');
+    const websocketUrl = this.resolveWebsocketUrl();
+    await this.websocketService.connectToString(websocketUrl);
+  }
+
+  /**
+   * 解析要连接的 WebSocket 地址
+   * 优先读取 URL 查询参数 ?server=（便于在非同源托管时手动指定服务器），
+   * 缺省时回退到「连接网页同源服务器」的默认行为
+   * @returns ws/wss 开头的完整 WebSocket 地址
+   */
+  private resolveWebsocketUrl(): string {
+    const server = new URLSearchParams(this.document.location.search).get('server');
+    if (server && server.trim()) {
+      return this.toWebsocketUrl(server.trim());
+    }
+    // 默认：连接网页同源服务器（Web 版由 Macro Deck 服务端自身托管时的场景）
+    const urlParts = this.document.baseURI.split('/');
     // 将 http/https 协议替换为 ws/wss
     const wsProtocol = urlParts[0].toLowerCase().replace('http', 'ws');
     const host = urlParts[2];
-    const websocketUrl = `${wsProtocol}//${host}`;
+    return `${wsProtocol}//${host}`;
+  }
 
-    await this.websocketService.connectToString(websocketUrl);
+  /**
+   * 把用户提供的 server 值规整为 ws/wss 地址
+   * 兼容：host:port（默认 ws://）、ws(s)://host:port（原样）、http(s)://host:port（转 ws/wss）
+   * @param server 用户在 ?server= 中提供的服务器地址
+   * @returns ws/wss 开头的完整 WebSocket 地址
+   */
+  private toWebsocketUrl(server: string): string {
+    const lower = server.toLowerCase();
+    if (lower.startsWith('ws://') || lower.startsWith('wss://')) {
+      return server;
+    }
+    if (lower.startsWith('https://')) {
+      return 'wss://' + server.substring('https://'.length);
+    }
+    if (lower.startsWith('http://')) {
+      return 'ws://' + server.substring('http://'.length);
+    }
+    // 裸 host:port，默认非加密 ws://
+    return 'ws://' + server;
   }
 
   protected readonly environment = environment;
