@@ -50,13 +50,15 @@ function Sync-PathFromRegistry {
 function Select-GemMirror {
   $candidates = @(
     'https://mirrors.ustc.edu.cn/rubygems/',
-    'https://mirrors.aliyun.com/rubygems/',
     'https://mirrors.tuna.tsinghua.edu.cn/rubygems/',
     'https://gems.ruby-china.com/'
   )
   foreach ($m in $candidates) {
     try {
-      $probe = ($m.TrimEnd('/')) + '/specs.4.8.gz'
+      # 探测 compact index 的 versions 端点：镜像要直接当 source 用，必须支持
+      # compact index（否则 Bundler 仍回落到 api.rubygems.org 解析依赖）。
+      # 阿里云镜像的 /versions 返回 404、不支持 compact index，故不列入候选。
+      $probe = ($m.TrimEnd('/')) + '/versions'
       $req = [System.Net.HttpWebRequest]::Create($probe)
       $req.Method = 'HEAD'
       $req.Timeout = 8000
@@ -134,31 +136,48 @@ function Ensure-FastlaneBundle {
   Write-Ok "使用 Gemfile：$gemfile"
 
   if (-not $CheckOnly) {
-    # ① 选一个当前可连通的 RubyGems 国内镜像并配置（项目级，写入 $bundleRoot\.bundle\config）。
-    #    Gemfile 写死 source "https://rubygems.org"，国内直连依赖 API 会超时。
-    #    用 bundle config mirror 把对 rubygems.org 的请求整体重定向到镜像；
-    #    fallback_timeout 让镜像短暂无响应时快速回退，避免长时间卡住。
+    # 选一个当前可连通的 RubyGems 国内镜像。
     $mirror = Select-GemMirror
+
+    # 关键：必须改写 Gemfile 的 source，而不是用 bundle config mirror。
+    # 原因：mirror 配置只重定向 source 的 specs 拉取，但 Bundler 的依赖解析走的是
+    # 独立的 compact index / dependency API（api.rubygems.org），mirror 拦不住它，
+    # 国内直连 api.rubygems.org 会超时（实测如此）。把 source 直接指向镜像，
+    # 整个解析（versions/info/names 三端点）都走镜像，根本不碰 api.rubygems.org。
+    # Gemfile 是入库文件，source 不能永久改，故 try/finally 用后即恢复。
+    $gemfileBackup = $null
     if ($mirror) {
-      Invoke-NativeIn -Path $bundleRoot -Block {
-        & bundle config set --local mirror.https://rubygems.org $mirror
-      } | Out-Null
-      Invoke-NativeIn -Path $bundleRoot -Block {
-        & bundle config set --local mirror.https://rubygems.org.fallback_timeout 3
-      } | Out-Null
+      $original = Get-Content -LiteralPath $gemfile -Raw
+      if ($original -match 'source\s+["'']https://rubygems\.org["'']') {
+        $gemfileBackup = $original
+        $mirrorSource = $mirror.TrimEnd('/')
+        $patched = $original -replace 'source\s+["'']https://rubygems\.org["'']', "source `"$mirrorSource`""
+        Set-Content -LiteralPath $gemfile -Value $patched -NoNewline
+        Write-Ok "已临时将 Gemfile source 指向镜像：$mirrorSource"
+      }
     } else {
-      Write-Warn '所有国内镜像均不可达，将直接使用 rubygems.org（可能较慢）。'
+      Write-Warn '所有国内镜像均不可达，将直接使用 rubygems.org（可能较慢或超时）。'
       Write-Warn '若长时间卡住，请检查本机网络/防火墙/安全软件是否拦截了镜像站。'
     }
 
-    # ② 对齐 lockfile 的 BUNDLED WITH 与当前 Bundler 版本。
-    #    否则 Bundler 4.x 见到 lockfile 锁的旧版会去下载并切换到旧版重跑（慢且无谓）。
-    if (Test-LockfileBundlerMismatch -BundleRoot $bundleRoot) {
-      Write-Warn 'Gemfile.lock 的 Bundler 版本与当前不一致，正在对齐 ...'
-      Invoke-NativeIn -Path $bundleRoot -Block { & bundle update --bundler } | Out-Null
+    try {
+      # 对齐 lockfile 的 BUNDLED WITH 与当前 Bundler 版本，避免 Bundler 4.x
+      # 见到 lockfile 锁的旧版后下载并切换到旧版重跑（慢且无谓）。
+      if (Test-LockfileBundlerMismatch -BundleRoot $bundleRoot) {
+        Write-Warn 'Gemfile.lock 的 Bundler 版本与当前不一致，正在对齐 ...'
+        Invoke-NativeIn -Path $bundleRoot -Block { & bundle update --bundler } | Out-Null
+      }
+
+      $code = Invoke-NativeIn -Path $bundleRoot -Block { & bundle install }
+    }
+    finally {
+      # 无论成败都恢复 Gemfile 原始 source，避免把镜像地址提交进 git。
+      if ($null -ne $gemfileBackup) {
+        Set-Content -LiteralPath $gemfile -Value $gemfileBackup -NoNewline
+        Write-Ok 'Gemfile source 已恢复为 rubygems.org'
+      }
     }
 
-    $code = Invoke-NativeIn -Path $bundleRoot -Block { & bundle install }
     if ($code -ne 0) {
       Write-Fail 'bundle install 执行失败'
       return $false
