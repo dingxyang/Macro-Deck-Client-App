@@ -1,11 +1,14 @@
-# script/_common.ps1
-# 5 个 .ps1 脚本共享的辅助函数与状态变量。
+# scripts/windows.bak/_common.ps1
+# 本目录各 .ps1 脚本（install_* / build_* / run_*）共享的辅助函数与状态变量。
+# 面向 Ionic + Angular + Capacitor + fastlane 工具链。
 # 通过 dot-sourcing 引入：. (Join-Path $PSScriptRoot '_common.ps1')
 #
 # 调用脚本约定：
 #   - -y 静默模式：调用脚本声明 [switch]$Yes 并在 dot-source 后执行
 #       if ($Yes) { Enable-AutoConfirm }
 #   - 如需追踪整体失败状态，调用脚本应在顶部声明 $Failed = $false
+
+$script:RootDir = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 <#
@@ -281,7 +284,7 @@ function Invoke-NativeText {
 function Invoke-NativeStream {
   # 透传 native 命令的输出到 Host：把 stderr 合并进 stdout，并把 ErrorRecord
   # 强制转为字符串，避免 PowerShell 5.1 用错误格式化器显示
-  # （如 rustup 把 "info: ..." 写到 stderr 时会被显示成大红块）。
+  # （部分 CLI 把 "info: ..." 写到 stderr 时会被显示成大红块）。
   # 调用方不要在块里再写 `2>&1 | Out-Host`，本函数已统一处理。
   # winget 等工具的进度条帧（如 "▉  3%" 或 "- \ | /" 旋转动画）每帧输出一行，
   # 用 [Console]::SetCursorPosition 覆盖同一行，避免刷屏。
@@ -340,58 +343,12 @@ function Invoke-NativeStreamIn {
   try { Invoke-NativeStream -Block $Block } finally { Pop-Location }
 }
 
-# ─── Rustup helpers ──────────────────────────────────────────────────────────
-<#
-.SYNOPSIS
-  获取当前 rustup 已安装的 target 列表。
-.OUTPUTS
-  [string[]] 已安装 target；rustup 不存在时返回空数组。
-#>
-function Get-RustupInstalledTarget {
-  # 已安装的 Rust 编译目标列表（string[]）。rustup 不存在时返回空数组。
-  # 注意：PowerShell 会枚举数组输出；若直接 return @()，调用方可能得到 $null。
-  if (-not (Get-ExePath 'rustup.exe')) { return ,([string[]]@()) }
-  return @(Invoke-NativeText -FilePath 'rustup' -Arguments @('target', 'list', '--installed') |
-    Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-}
-
-<#
-.SYNOPSIS
-  获取 Tauri Android 构建所需的 Rust target 列表（固定 4 个）。
-.OUTPUTS
-  [string[]]
-#>
-function Get-AndroidRustTarget {
-  # Tauri Android 构建所需的 4 个 Rust 编译目标。install / remove / build 共用。
-  return @(
-    'aarch64-linux-android',
-    'armv7-linux-androideabi',
-    'i686-linux-android',
-    'x86_64-linux-android'
-  )
-}
-
-<#
-.SYNOPSIS
-  获取当前 rustup 已安装的工具链名称列表。
-.OUTPUTS
-  [string[]] 工具链名称（去掉 "(default)" 等后缀）。
-#>
-function Get-RustupToolchain {
-  # 已安装的 Rust 工具链名称列表（string[]，每行第一段，去掉 "(default)" 等后缀）。
-  # 注意：PowerShell 会枚举数组输出；若直接 return @()，调用方可能得到 $null。
-  if (-not (Get-ExePath 'rustup.exe')) { return ,([string[]]@()) }
-  return @(Invoke-NativeText -FilePath 'rustup' -Arguments @('toolchain', 'list') |
-    ForEach-Object { ($_ -split '\s+')[0] } |
-    Where-Object { $_ -match '^\w+-\w+-\w+-\w+' })
-}
-
 # ─── Path / process discovery ────────────────────────────────────────────────
 <#
 .SYNOPSIS
   解析可执行文件路径（相当于 Windows 的 where/PowerShell 的 Get-Command Source）。
 .PARAMETER Name
-  命令名（如 rustc.exe）。
+  命令名（如 node.exe）。
 .OUTPUTS
   [string] 可执行文件路径；不存在返回 $null。
 #>
@@ -424,18 +381,6 @@ function Add-PathPrefix([string]$Prefix) {
   $parts = $env:Path -split ';'
   if ($parts -contains $Prefix) { return }
   $env:Path = "$Prefix;$env:Path"
-}
-
-<#
-.SYNOPSIS
-  把 ~\.cargo\bin 前置到当前进程 PATH（如果该目录存在）。
-.NOTES
-  主要用于在当前 shell 里立刻找到 rustup/rustc/cargo。
-#>
-function Add-CargoBinPath {
-  # 若 ~/.cargo/bin 存在则前置到当前 shell PATH，便于随后 Get-ExePath 命中 rustup/rustc。
-  $p = Join-Path $HOME '.cargo\bin'
-  if (Test-Path -LiteralPath $p) { Add-PathPrefix $p }
 }
 
 <#
@@ -501,7 +446,7 @@ function Add-UserPathSegment([string]$Segment) {
 #>
 function Set-UserEnvIfChanged {
   # 写入用户环境变量；若与现值相同则只打印"已正确设置"日志。
-  # 替代 install_android_sdk 中重复的 ANDROID_HOME / ANDROID_NDK_HOME 设置块。
+  # 替代 install_android_sdk 中重复的 ANDROID_HOME 设置块。
   param([string]$Name, [string]$Value)
   $current = [Environment]::GetEnvironmentVariable($Name, 'User')
   if ($current -eq $Value) {
@@ -727,158 +672,7 @@ function Save-WebFile {
   return $true
 }
 
-# ─── C/C++ compiler detection ─────────────────────────────────────────────────
-# MSYS2/MinGW 路径常量（Test-Gnu / Test-GnuAssembler 等共享使用）
-$script:MsysRoot    = 'C:\msys64'
-$script:MsysBash    = Join-Path $script:MsysRoot 'usr\bin\bash.exe'
-$script:MingwBin     = Join-Path $script:MsysRoot 'mingw64\bin'
-$script:MingwGccExe  = Join-Path $script:MingwBin 'gcc.exe'
-$script:MingwAsExe   = Join-Path $script:MingwBin 'as.exe'
-
-<#
-.SYNOPSIS
-  检测 MSVC cl.exe 是否可用（包含 vswhere 回退定位），找到后自动加入当前 PATH。
-.OUTPUTS
-  [bool]
-.NOTES
-  cl.exe 可能不在 PATH（例如仅装了 Build Tools），因此需要通过 vswhere 定位安装目录。
-  检测到后会自动将所在目录加入当前进程 PATH，确保后续构建步骤可用。
-#>
-function Test-Msvc {
-  $cl = Get-ExePath 'cl.exe'
-  if (-not $cl) {
-    # cl.exe 不在 PATH 中时，用 vswhere 定位 VS 安装
-    $vswhere = Get-ExePath 'vswhere.exe'
-    if (-not $vswhere) {
-      $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-      if (-not (Test-Path -LiteralPath $vswhere)) {
-        $vswhere = Join-Path $env:ProgramFiles 'Microsoft Visual Studio\Installer\vswhere.exe'
-        if (-not (Test-Path -LiteralPath $vswhere)) { $vswhere = $null }
-      }
-    }
-    if ($vswhere) {
-      $installPath = (Invoke-NativeText -FilePath $vswhere -Arguments @('-latest', '-products', '*', '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-property', 'installationPath') | Select-Object -First 1)
-      if ($installPath) {
-        $msvcDir = Join-Path $installPath 'VC\Tools\MSVC'
-        if (Test-Path -LiteralPath $msvcDir) {
-          $clItem = Get-ChildItem -LiteralPath $msvcDir -Recurse -Filter 'cl.exe' -ErrorAction SilentlyContinue |
-            Where-Object { $_.Directory.Name -eq 'x64' } |
-            Sort-Object FullName -Descending |
-            Select-Object -First 1
-          if ($clItem) {
-            $cl = $clItem.FullName
-            Add-PathPrefix $clItem.Directory.FullName
-          }
-        }
-      }
-    }
-  }
-  if (-not $cl) { return $false }
-  $info = (Invoke-NativeText -FilePath $cl | Select-Object -First 1)
-  Write-Ok "MSVC cl.exe 已安装"
-  Write-Host "    路径：$cl"
-  if (-not [string]::IsNullOrWhiteSpace($info)) { Write-Host "    版本：$info" }
-  return $true
-}
-
-<#
-.SYNOPSIS
-  检测 GNU 汇编器 as.exe（Rust GNU toolchain 的 dlltool/import lib 可能依赖）。
-.OUTPUTS
-  [bool]
-.NOTES
-  - 优先从 PATH 找 as.exe
-  - 若 MSYS2 已安装且 mingw64\bin\as.exe 存在，会临时加入 PATH
-#>
-function Test-GnuAssembler {
-  $as = Get-ExePath 'as.exe'
-  if ($as) {
-    Write-Ok "GNU 汇编器 as 已安装"
-    Write-Host "    路径：$as"
-    return $true
-  }
-  if (Test-Path -LiteralPath $script:MingwAsExe) {
-    Add-PathPrefix $script:MingwBin
-    Write-Ok "GNU 汇编器 as 已安装（已添加到 PATH）"
-    Write-Host "    路径：$($script:MingwAsExe)"
-    return $true
-  }
-  return $false
-}
-
-<#
-.SYNOPSIS
-  检测 GNU GCC 编译器（gcc.exe）及汇编器 as.exe 是否可用。
-.OUTPUTS
-  [bool]
-.NOTES
-  - 优先从 PATH 查找 gcc，若 MSYS2 已安装但未加入 PATH 会自动探测
-  - 同时检查 g++ 和 as.exe，缺失时给出警告（不会自动安装）
-#>
-function Test-Gnu {
-  $gcc = Get-ExePath 'gcc.exe'
-  if (-not $gcc) {
-    if (Test-Path -LiteralPath $script:MingwGccExe) {
-      Add-PathPrefix $script:MingwBin
-      $gcc = $script:MingwGccExe
-    }
-  }
-  if (-not $gcc) { return $false }
-  $info = (Invoke-NativeText -FilePath 'gcc' -Arguments @('--version') | Select-Object -First 1)
-  Write-Ok "GNU GCC 编译器已安装"
-  Write-Host "    路径：$gcc"
-  if (-not [string]::IsNullOrWhiteSpace($info)) { Write-Host "    版本：$info" }
-  if (-not (Get-ExePath 'g++.exe')) { Write-Warn "GCC 已找到但 G++ 未找到，部分 C++ 依赖可能编译失败" }
-  if (-not (Test-GnuAssembler)) { Write-Warn "GNU 汇编器 as.exe 未找到，Rust dlltool 可能失败" }
-  return $true
-}
-
-
-<#
-.SYNOPSIS
-  检测 rustc/rustup 是否可用，并解析 toolchain host/版本信息。
-.PARAMETER Quiet
-  静默模式：不输出提示日志，仅返回 true/false 并设置脚本变量。
-.OUTPUTS
-  [bool]
-.NOTES
-  会写入 $script:RustcVersion / $script:RustcHost，供后续摘要展示使用。
-#>
-function Test-RustToolchain {
-  param([switch]$Quiet)
-  $rustc = Get-ExePath 'rustc.exe'
-  if (-not $rustc) { return $false }
-
-  $versionOutput = Invoke-NativeText -FilePath 'rustc' -Arguments @('--version')
-  $script:RustcVersion = ($versionOutput | Select-Object -First 1)
-  # 校验输出版本号格式（如 "rustc 1.85.0 (...)"），排除 error/warning 等异常输出
-  if ([string]::IsNullOrWhiteSpace($script:RustcVersion) -or $script:RustcVersion -notmatch '^rustc \d+\.\d+\.\d+') {
-    if (-not $Quiet) { Write-Warn "rustc 已找到但输出异常（toolchain 可能不完整）：$script:RustcVersion" }
-    $script:RustcVersion = $null
-    $script:RustcHost = $null
-    return $false
-  }
-  $hostLine = Invoke-NativeText -FilePath 'rustc' -Arguments @('-vV') |
-    Where-Object { $_ -match '^host:\s*' } |
-    Select-Object -First 1
-  if ($hostLine) { $script:RustcHost = ($hostLine -replace '^host:\s*', '').Trim() }
-
-  $rustupVersion = ''
-  $rustup = Get-ExePath 'rustup.exe'
-  if ($rustup) {
-    $rustupVersion = (Invoke-NativeText -FilePath 'rustup' -Arguments @('--version') | Select-Object -First 1)
-  }
-
-  if (-not $Quiet) {
-    Write-Ok "Rust 工具链已安装"
-    if ($rustupVersion) { Write-Host "    rustup：$rustupVersion" }
-    if (-not [string]::IsNullOrWhiteSpace($script:RustcVersion)) { Write-Host "    rustc：$($script:RustcVersion)" }
-    if (-not [string]::IsNullOrWhiteSpace($script:RustcHost)) { Write-Host "    toolchain：$($script:RustcHost)" }
-  }
-  return $true
-}
-
-# ─── Android SDK / NDK discovery ─────────────────────────────────────────────
+# ─── Android SDK discovery ──────────────────────────────────────────────────
 <#
 .SYNOPSIS
   获取 Android SDK 根目录候选列表（按优先级）。
@@ -956,78 +750,6 @@ function Get-AndroidHomeFromSdkManager([string]$SdkManagerPath) {
   $cmdlineDir = Split-Path -Parent $latestDir
   $sdkRoot = Split-Path -Parent $cmdlineDir
   return (Resolve-Path -LiteralPath $sdkRoot).Path
-}
-
-<#
-.SYNOPSIS
-  在 ANDROID_HOME 下定位 NDK（优先 ndk/<版本>，其次 ndk-bundle）。
-.PARAMETER AndroidHome
-  Android SDK 根目录。
-.OUTPUTS
-  [hashtable] 包含 Path/Version/Kind；未找到返回 $null。
-#>
-function Resolve-AndroidNdk([string]$AndroidHome) {
-  $ndkDir = Join-Path $AndroidHome 'ndk'
-  if (Test-Path -LiteralPath $ndkDir) {
-    $versions = Get-ChildItem -LiteralPath $ndkDir -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
-    if ($versions) {
-      $best = $versions | Sort-Object {
-        try { [version]($_ -replace '[^0-9\.]', '') } catch { [version]'0.0' }
-      } | Select-Object -Last 1
-      if ($best) { return @{ Path = (Join-Path $ndkDir $best); Version = $best; Kind = 'ndk' } }
-    }
-  }
-  $bundle = Join-Path $AndroidHome 'ndk-bundle'
-  if (Test-Path -LiteralPath $bundle) {
-    $ver = 'ndk-bundle'
-    $prop = Join-Path $bundle 'source.properties'
-    if (Test-Path -LiteralPath $prop) {
-      $line = (Get-Content -LiteralPath $prop -ErrorAction SilentlyContinue | Where-Object { $_ -match '^Pkg\.Revision\s*=' } | Select-Object -First 1)
-      if ($line) { $ver = ($line -split '=' | Select-Object -Last 1).Trim() }
-    }
-    return @{ Path = $bundle; Version = $ver; Kind = 'ndk-bundle' }
-  }
-  return $null
-}
-
-<#
-.SYNOPSIS
-  为每个 Rust Android 目标设置 CC/CXX/AR 环境变量，指向 Android NDK 的 LLVM 工具链。
-.DESCRIPTION
-  Rust 交叉编译时，cc-rs 通过 CC_<target>/CXX_<target>/AR_<target> 找编译器。
-  不设置的话会回退到 host 端 gcc，编译 Android 目标必然失败。
-  注：故意不把 NDK toolchain bin 加进 PATH，避免覆盖 host 链接器。
-.PARAMETER AndroidNdkHome
-  Android NDK 根目录（含 toolchains\llvm\prebuilt\windows-x86_64\bin）。
-.PARAMETER ApiLevel
-  Android API 级别（决定 clang 文件名后缀，如 21 → aarch64-linux-android21-clang.cmd）。默认 21。
-#>
-function Set-AndroidNdkEnv {
-  param(
-    [Parameter(Mandatory)] [string]$AndroidNdkHome,
-    [int]$ApiLevel = 21
-  )
-
-  if ([string]::IsNullOrWhiteSpace($AndroidNdkHome)) {
-    Write-Warn "ANDROID_NDK_HOME 为空，跳过 NDK 环境变量配置"
-    return
-  }
-
-  $toolchainBin = Join-Path $AndroidNdkHome 'toolchains\llvm\prebuilt\windows-x86_64\bin'
-  if (-not (Test-Path -LiteralPath $toolchainBin)) {
-    Write-Warn "NDK toolchain 目录未找到：$toolchainBin"
-    Write-Warn "将使用系统默认编译器"
-    return
-  }
-
-  $llvmAr = Join-Path $toolchainBin 'llvm-ar.exe'
-  foreach ($t in (Get-AndroidRustTarget)) {
-    $underscore = $t -replace '-', '_'
-    Set-Item -Path "env:CC_$underscore"  -Value (Join-Path $toolchainBin "${t}${ApiLevel}-clang.cmd")
-    Set-Item -Path "env:CXX_$underscore" -Value (Join-Path $toolchainBin "${t}${ApiLevel}-clang++.cmd")
-    Set-Item -Path "env:AR_$underscore"  -Value $llvmAr
-  }
-  Write-Ok "NDK clang/clang++/llvm-ar 已配置（CC/CXX/AR_<target>）：$toolchainBin"
 }
 
 <#
@@ -1110,4 +832,328 @@ function Get-PropValue {
   $line = $Lines | Where-Object { $_ -match ('^' + [regex]::Escape($Key) + '\s*=') } | Select-Object -First 1
   if (-not $line) { return '' }
   return ($line -replace ('^' + [regex]::Escape($Key) + '\s*=\s*'), '').Trim().Trim('"').Trim("'")
+}
+
+# ─── Macro Deck / Capacitor helpers ──────────────────────────────────────────
+<#
+.SYNOPSIS
+  兼容包装：按命令名解析可执行文件路径。
+.PARAMETER Name
+  命令名，例如 ruby、bundle、npx。
+.OUTPUTS
+  [string] 命令路径；不存在返回 null。
+.NOTES
+  保留这个包装是为了让 windows.bak 的 Ruby/Fastlane 脚本和早期实现命名兼容；
+  实际解析逻辑复用模板里的 Get-ExePath。
+#>
+function Get-CommandPath([string]$Name) {
+  Get-ExePath $Name
+}
+
+<#
+.SYNOPSIS
+  检查必要命令是否存在。
+.PARAMETER Name
+  要检查的命令名。
+.PARAMETER InstallHint
+  命令缺失时追加输出的安装提示。
+.OUTPUTS
+  [bool] 命令存在返回 true，否则返回 false。
+#>
+function Require-Command([string]$Name, [string]$InstallHint = '') {
+  if (Get-ExePath $Name) { return $true }
+  Write-Fail "缺少必要命令：$Name"
+  if (-not [string]::IsNullOrWhiteSpace($InstallHint)) {
+    Write-Host ""
+    Write-Host $InstallHint
+  }
+  return $false
+}
+
+<#
+.SYNOPSIS
+  检查必要环境变量是否已在当前进程中设置。
+.PARAMETER Name
+  环境变量名。
+.OUTPUTS
+  [bool] 变量存在且非空返回 true。
+#>
+function Require-Env([string]$Name) {
+  $value = [Environment]::GetEnvironmentVariable($Name, 'Process')
+  if (-not [string]::IsNullOrWhiteSpace($value)) { return $true }
+  Write-Fail "缺少必要环境变量：$Name"
+  return $false
+}
+
+<#
+.SYNOPSIS
+  在仓库根目录执行 native 命令。
+.PARAMETER Block
+  要执行的命令脚本块。
+.OUTPUTS
+  [int] native 命令退出码。
+.NOTES
+  用于 Ionic/Capacitor 命令，避免调用脚本当前目录影响结果。
+#>
+function Invoke-InRoot {
+  param([Parameter(Mandatory)] [scriptblock]$Block)
+  Invoke-NativeStreamIn -Path $script:RootDir -Block $Block
+  return $LASTEXITCODE
+}
+
+<#
+.SYNOPSIS
+  在指定目录执行 native 命令。
+.PARAMETER Path
+  命令工作目录。
+.PARAMETER Block
+  要执行的命令脚本块。
+.OUTPUTS
+  [int] native 命令退出码。
+#>
+function Invoke-NativeIn {
+  param(
+    [Parameter(Mandatory)] [string]$Path,
+    [Parameter(Mandatory)] [scriptblock]$Block
+  )
+  Invoke-NativeStreamIn -Path $Path -Block $Block
+  return $LASTEXITCODE
+}
+
+<#
+.SYNOPSIS
+  执行 native 命令并在失败时抛出异常。
+.PARAMETER Display
+  用于日志展示的命令文本。
+.PARAMETER Block
+  要执行的命令脚本块。
+.NOTES
+  安装类脚本用它统一处理命令日志与退出码检查。
+#>
+function Invoke-Checked {
+  param(
+    [Parameter(Mandatory)] [string]$Display,
+    [Parameter(Mandatory)] [scriptblock]$Block
+  )
+  Write-Host "  运行命令：$Display" -ForegroundColor Cyan
+  Invoke-NativeStream -Block $Block
+  if ($LASTEXITCODE -ne 0) {
+    throw "$Display failed with exit code $LASTEXITCODE"
+  }
+}
+
+<#
+.SYNOPSIS
+  通过 winget 安装指定软件包。
+.PARAMETER Id
+  winget 包 Id。
+.PARAMETER Name
+  日志中展示的软件名称。
+.OUTPUTS
+  [bool] 安装命令成功返回 true。
+#>
+function Install-WingetPackage {
+  param(
+    [Parameter(Mandatory)] [string]$Id,
+    [Parameter(Mandatory)] [string]$Name
+  )
+  if (-not (Get-ExePath 'winget.exe')) {
+    Write-Fail "缺少 winget，无法自动安装 $Name"
+    return $false
+  }
+  Invoke-NativeStream -Block { & winget install --id $Id --source winget --accept-package-agreements --accept-source-agreements }
+  if ($LASTEXITCODE -ne 0) {
+    Write-Fail "$Name 安装失败"
+    return $false
+  }
+  return $true
+}
+
+<#
+.SYNOPSIS
+  确保前端依赖已安装。
+.NOTES
+  本仓库存在 npm peer dependency 冲突，因此沿用原脚本的
+  npm install --legacy-peer-deps，而不是普通 npm install。
+#>
+function Ensure-NodeModules {
+  if (Test-Path -LiteralPath (Join-Path $script:RootDir 'node_modules')) {
+    Write-Ok "node_modules 已存在"
+    return
+  }
+  Write-Warn "node_modules 不存在，准备执行 npm install --legacy-peer-deps"
+  Invoke-NativeStreamIn -Path $script:RootDir -Block { & npm install --legacy-peer-deps }
+  if ($LASTEXITCODE -ne 0) {
+    throw "npm install --legacy-peer-deps failed with exit code $LASTEXITCODE"
+  }
+}
+
+<#
+.SYNOPSIS
+  执行 Ionic Web 构建。
+.PARAMETER Configuration
+  Ionic 构建配置名，例如 development、production、web_production。
+.NOTES
+  会先调用 Ensure-NodeModules，确保依赖存在。
+#>
+function Invoke-IonicBuild([string]$Configuration) {
+  Ensure-NodeModules
+  Invoke-NativeStreamIn -Path $script:RootDir -Block { & npx ionic build -c $Configuration }
+  if ($LASTEXITCODE -ne 0) {
+    throw "ionic build failed with exit code $LASTEXITCODE"
+  }
+}
+
+<#
+.SYNOPSIS
+  执行 Capacitor 平台同步。
+.PARAMETER Platform
+  Capacitor 平台名，例如 android。
+#>
+function Invoke-CapSync([string]$Platform) {
+  Invoke-NativeStreamIn -Path $script:RootDir -Block { & npx cap sync $Platform }
+  if ($LASTEXITCODE -ne 0) {
+    throw "cap sync $Platform failed with exit code $LASTEXITCODE"
+  }
+}
+
+<#
+.SYNOPSIS
+  查找包含 fastlane 声明的 Gemfile 所在目录。
+.OUTPUTS
+  [string] Gemfile 所在目录；找不到返回 null。
+.NOTES
+  优先检查 android\Gemfile，再检查仓库根 Gemfile；只有包含 gem 'fastlane'
+  的 Gemfile 才会被用于 bundle exec fastlane。
+#>
+function Get-FastlaneBundleRoot {
+  $candidates = @(
+    (Join-Path $script:RootDir 'android'),
+    $script:RootDir
+  )
+  foreach ($dir in $candidates) {
+    $gemfile = Join-Path $dir 'Gemfile'
+    if (-not (Test-Path -LiteralPath $gemfile)) { continue }
+    $content = Get-Content -LiteralPath $gemfile -Raw
+    if ($content -match "gem\s+['""]fastlane['""]") {
+      return $dir
+    }
+  }
+  return $null
+}
+
+<#
+.SYNOPSIS
+  解析 fastlane 调用方式。
+.OUTPUTS
+  [pscustomobject] 包含 Command、Arguments、Display；不可用返回 null。
+.NOTES
+  优先返回 bundle exec fastlane，符合 fastlane 官方推荐；只有没有可用
+  Bundler/Gemfile 时才回退全局 fastlane。
+#>
+function Get-FastlaneCommand {
+  $bundleRoot = Get-FastlaneBundleRoot
+  if ($bundleRoot -and (Get-ExePath 'bundle')) {
+    $env:BUNDLE_GEMFILE = Join-Path $bundleRoot 'Gemfile'
+    return [pscustomobject]@{
+      Command = 'bundle'
+      Arguments = @('exec', 'fastlane')
+      Display = 'bundle exec fastlane'
+    }
+  }
+  if (Get-ExePath 'fastlane') {
+    return [pscustomobject]@{
+      Command = 'fastlane'
+      Arguments = @()
+      Display = 'fastlane'
+    }
+  }
+  return $null
+}
+
+<#
+.SYNOPSIS
+  从 android\variables.gradle 读取 compileSdkVersion。
+.OUTPUTS
+  [string] Android API 版本号；读取失败默认返回 35。
+#>
+function Get-AndroidSdkApi {
+  $variables = Join-Path $script:RootDir 'android\variables.gradle'
+  if (-not (Test-Path -LiteralPath $variables)) { return '35' }
+  foreach ($line in Get-Content -LiteralPath $variables) {
+    if ($line -match 'compileSdkVersion\s*=\s*(\d+)') {
+      return $Matches[1]
+    }
+  }
+  return '35'
+}
+
+<#
+.SYNOPSIS
+  从 android\app\build.gradle 读取 Android Gradle 字段值。
+.PARAMETER Key
+  字段名，例如 versionCode、versionName。
+.OUTPUTS
+  [string] 字段值；不存在返回空字符串。
+#>
+function Read-AndroidGradleValue([string]$Key) {
+  $gradleFile = Join-Path $script:RootDir 'android\app\build.gradle'
+  if (-not (Test-Path -LiteralPath $gradleFile)) { return '' }
+  foreach ($line in Get-Content -LiteralPath $gradleFile) {
+    if ($line -match "^\s*$([regex]::Escape($Key))\s+(.+?)\s*$") {
+      return $Matches[1].Trim().Trim('"').Trim("'")
+    }
+  }
+  return ''
+}
+
+<#
+.SYNOPSIS
+  加载本地 Android 签名 PowerShell 配置。
+.PARAMETER FilePath
+  本地签名配置文件路径。
+.NOTES
+  期望文件设置 $env:KEYSTORE_FILE_PASSWORD 等进程环境变量；
+  该文件应放在 scripts\local\android-signing.ps1，且不应提交密钥密码。
+#>
+function Load-AndroidSigningPs1 {
+  param([string]$FilePath)
+  if (-not (Test-Path -LiteralPath $FilePath)) { return }
+  Write-Ok "加载 Android 签名配置：$FilePath"
+  . $FilePath
+}
+
+<#
+.SYNOPSIS
+  输出 Android release 签名配置缺失时的修复提示。
+.PARAMETER SigningFile
+  推荐创建的本地签名配置文件路径。
+.PARAMETER DefaultKeystore
+  默认 keystore 文件路径。
+.PARAMETER DefaultAlias
+  默认 key alias。
+#>
+function Print-AndroidSigningHelp {
+  param(
+    [string]$SigningFile,
+    [string]$DefaultKeystore,
+    [string]$DefaultAlias
+  )
+  Write-Host ""
+  Write-Host "Android release builds require a signing keystore." -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "Create or update:" -ForegroundColor Yellow
+  Write-Host "  $SigningFile"
+  Write-Host ""
+  Write-Host "Minimum content:"
+  Write-Host '  $env:KEYSTORE_FILE_PASSWORD = "your_keystore_password"'
+  Write-Host ""
+  Write-Host "Optional overrides:"
+  Write-Host "  `$env:BUILD_NUMBER = `"$(Read-AndroidGradleValue 'versionCode')`""
+  Write-Host "  `$env:VERSION_NUMBER = `"$(Read-AndroidGradleValue 'versionName')`""
+  Write-Host "  `$env:KEYSTORE_FILE_PATH = `"$DefaultKeystore`""
+  Write-Host "  `$env:KEYSTORE_FILE_ALIAS = `"$DefaultAlias`""
+  Write-Host ""
+  Write-Host "Create a default keystore:"
+  Write-Host "  keytool -genkey -v -keystore `"$DefaultKeystore`" -keyalg RSA -keysize 2048 -validity 10000 -alias $DefaultAlias"
 }

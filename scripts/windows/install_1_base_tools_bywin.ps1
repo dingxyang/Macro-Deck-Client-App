@@ -1,13 +1,15 @@
 <#
 .SYNOPSIS
-  Windows 基础工具管理：按需安装/卸载 winget、Windows Terminal、Microsoft Store。
+  在 Windows 上按需安装/卸载基础工具：winget、Windows Terminal、Microsoft Store、Node.js LTS。
 .DESCRIPTION
+  主要流程：
   - 支持 -AddTools / -RemoveTools 指定工具列表；支持 all 代表全部
   - 对部分工具提供多种安装来源（GitHub/MS Store/winget），并尽量给出可复现的提示
+  - Node.js（提供 npm/npx）是后续 Ionic + Angular Web 构建的前置依赖
 .PARAMETER Yes
   自动确认（静默模式）。
 .PARAMETER AddTools
-  要安装的工具 Id 列表（winget/terminal/store 或 all）。
+  要安装的工具 Id 列表（winget/terminal/store/node 或 all）。
 .PARAMETER RemoveTools
   要卸载的工具 Id 列表（terminal 或 all）。
 #>
@@ -32,7 +34,8 @@ if ($Yes) { Enable-AutoConfirm }
 $ToolDefs = @(
   @{ Id = 'winget'; Name = 'winget'; Description = 'Windows 包管理器' },
   @{ Id = 'terminal'; Name = 'Windows 终端'; Description = 'Windows Terminal（多标签终端）' },
-  @{ Id = 'store'; Name = 'Microsoft Store'; Description = 'Microsoft Store（应用商店）' }
+  @{ Id = 'store'; Name = 'Microsoft Store'; Description = 'Microsoft Store（应用商店）' },
+  @{ Id = 'node'; Name = 'Node.js LTS'; Description = 'Node.js LTS（npm / npx / Ionic 构建前置）' }
 )
 
 # ─── winget ───────────────────────────────────────────────────────────────────
@@ -680,6 +683,54 @@ function Install-MicrosoftStoreTool {
   return $false
 }
 
+# ─── Node.js ─────────────────────────────────────────────────────────────────
+
+function Test-NodeTool {
+  $node = Get-ExePath 'node.exe'
+  $npm = Get-ExePath 'npm.cmd'
+  if (-not $npm) { $npm = Get-ExePath 'npm.exe' }
+  $npx = Get-ExePath 'npx.cmd'
+  if (-not $npx) { $npx = Get-ExePath 'npx.exe' }
+
+  if (-not $node -or -not $npm -or -not $npx) { return $false }
+
+  $nodeVersion = Invoke-NativeText -FilePath $node -Arguments @('--version') | Select-Object -First 1
+  $npmVersion = Invoke-NativeText -FilePath $npm -Arguments @('--version') | Select-Object -First 1
+  Write-Ok "Node.js 已安装"
+  Write-Host "    node：$node ($nodeVersion)"
+  Write-Host "    npm ：$npm ($npmVersion)"
+  Write-Host "    npx ：$npx"
+  return $true
+}
+
+function Install-NodeTool {
+  Write-Host ""
+  Write-Host "═══ 安装 Node.js LTS ═══" -ForegroundColor Cyan
+  Write-Host ""
+
+  if (Test-NodeTool) { return $true }
+  if (-not (Confirm-Install "安装 Node.js LTS")) { return $false }
+
+  if (-not (Get-ExePath 'winget.exe')) {
+    Write-Fail "缺少 winget，无法自动安装 Node.js LTS"
+    Write-Fail "请手动安装：https://nodejs.org/"
+    return $false
+  }
+
+  try {
+    Invoke-NativeStream -Block { & winget install --id OpenJS.NodeJS.LTS --source winget --accept-package-agreements --accept-source-agreements }
+  }
+  catch {
+    Write-Fail "Node.js LTS 安装失败：$($_.Exception.Message)"
+    return $false
+  }
+
+  if (Test-NodeTool) { return $true }
+  Write-Warn "Node.js 安装流程已执行，但当前 shell 未检测到 node/npm/npx"
+  Write-Warn "请重新打开终端后再次运行此脚本验证"
+  return $false
+}
+
 # ─── 工具调度 ─────────────────────────────────────────────────────────────────
 
 # Id → Install 函数 的映射
@@ -687,6 +738,7 @@ $ToolInstallers = @{
   'winget'   = ${function:Install-WingetTool}
   'terminal' = ${function:Install-WindowsTerminalTool}
   'store'    = ${function:Install-MicrosoftStoreTool}
+  'node'     = ${function:Install-NodeTool}
 }
 
 # Id → Uninstall 函数 的映射
@@ -707,7 +759,7 @@ function Write-Usage {
   Write-Host "  .\install_base_tools_bywin.ps1 -RemoveTools <工具1,工具2,...>  卸载指定工具"
   Write-Host "  .\install_base_tools_bywin.ps1 -y -AddTools all               静默安装所有工具"
   Write-Host ""
-  Write-Host "可用工具：winget, terminal, store" -ForegroundColor Cyan
+  Write-Host "可用工具：winget, terminal, store, node" -ForegroundColor Cyan
   Write-Host ""
   Write-Host "可用工具：" -ForegroundColor Cyan
   foreach ($t in $ToolDefs) {

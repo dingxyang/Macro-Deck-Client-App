@@ -10,14 +10,13 @@ Enable-AutoConfirm
 
 <#
 .SYNOPSIS
-  安装/修复 Android SDK（Windows），并配置当前会话及用户级环境变量。
+  在 Windows 上安装/修复 Android SDK，并配置当前会话及用户级环境变量。
 .DESCRIPTION
   主要流程：
   1) 定位或自举安装 sdkmanager（cmdline-tools）
   2) 校验 Java 17 环境
-  3) 安装 platform-tools / NDK / platform / build-tools 等组件
-  4) 安装 Rust Android 交叉编译目标（如 rustup 可用）
-  5) 写入 ANDROID_HOME / ANDROID_NDK_HOME，并把 platform-tools 加入用户 PATH
+  3) 安装 platform-tools / platform / build-tools 等组件
+  4) 写入 ANDROID_HOME，并把 platform-tools 加入用户 PATH
 .PARAMETER SdkRoot
   优先使用的 SDK 根目录。若为空，将依次回退到 ANDROID_HOME 或默认路径。
 #>
@@ -120,7 +119,7 @@ function Show-SdkManagerVersion([string]$SdkManagerPath) {
 .PARAMETER AndroidHome
   Android SDK 根目录（会传入 --sdk_root=...）。
 .PARAMETER Packages
-  需要安装的包列表（如 platform-tools、ndk;xx、platforms;android-xx）。
+  需要安装的包列表（如 platform-tools、platforms;android-xx）。
 .OUTPUTS
   [bool] 是否安装成功。
 #>
@@ -189,12 +188,13 @@ $env:ANDROID_HOME = $androidHome
 Write-Host "[2/6] 检查 Java 环境" -ForegroundColor Cyan
 if (-not (Assert-Java17)) { exit 1 }
 
-Write-Host "[3/6] 准备安装的 Android SDK 组件" -ForegroundColor Cyan
+Write-Host "[3/5] 准备安装的 Android SDK 组件" -ForegroundColor Cyan
+$api = Get-AndroidSdkApi
+$buildToolsVersion = "$api.0.0"
 $packages = @(
   'platform-tools',
-  'ndk;27.0.12077973',
-  'platforms;android-34',
-  'build-tools;34.0.0'
+  "platforms;android-$api",
+  "build-tools;$buildToolsVersion"
 )
 $sdkmanagerOnDisk = Join-Path $androidHome 'cmdline-tools\latest\bin\sdkmanager.bat'
 if (-not (Test-Path -LiteralPath $sdkmanagerOnDisk)) {
@@ -213,7 +213,7 @@ if (Test-Path -LiteralPath $latest2) {
 foreach ($p in $packages) { Write-Host "    $p" }
 Write-Host ""
 
-Write-Host "[4/6] 安装 Android SDK 组件" -ForegroundColor Cyan
+Write-Host "[4/5] 安装 Android SDK 组件" -ForegroundColor Cyan
 if (-not (Invoke-SdkManager -SdkManagerPath $sdkmanager -AndroidHome $androidHome -Packages $packages)) {
   exit 1
 }
@@ -222,44 +222,7 @@ Write-Host ""
 Write-Ok "Android SDK 组件安装完成！"
 Write-Host ""
 
-Write-Host "[5/6] 安装 Rust Android 编译目标" -ForegroundColor Cyan
-$requiredTargets = Get-AndroidRustTarget
-
-if ($null -eq (Get-ExePath 'rustup.exe')) { Add-CargoBinPath }
-
-if ($null -ne (Get-ExePath 'rustup.exe')) {
-  # 只安装缺失 target，避免每次都重复执行 rustup target add
-  $installedTargets = Get-RustupInstalledTarget
-  $missing = New-Object System.Collections.Generic.List[string]
-  foreach ($t in $requiredTargets) {
-    if ($installedTargets -contains $t) {
-      Write-Ok "  $t（已安装）"
-    } else {
-      $missing.Add($t) | Out-Null
-      Write-Warn "  $t（未安装）"
-    }
-  }
-  if ($missing.Count -gt 0) {
-    Write-Host ""
-    Write-Host "  正在安装缺失的 Rust 编译目标..." -ForegroundColor Yellow
-    foreach ($t in $missing) {
-      Write-Host "  rustup target add $t" -ForegroundColor Cyan
-      Invoke-NativeStream -Block { & rustup target add $t }
-      if ($LASTEXITCODE -ne 0) { Write-Warn "  $t 安装失败，请手动运行：rustup target add $t" }
-    }
-    Write-Ok "Rust Android 编译目标安装完成"
-  } else {
-    Write-Ok "所有 Rust Android 编译目标已就绪"
-  }
-} else {
-  Write-Warn "未找到 rustup，跳过 Rust Android 编译目标安装"
-  Write-Warn "请从 https://rustup.rs 安装 Rust 后手动执行："
-  foreach ($t in $requiredTargets) { Write-Host "    rustup target add $t" }
-}
-
-Write-Host "[6/6] 配置环境变量" -ForegroundColor Cyan
-$ndkInfo = Resolve-AndroidNdk -AndroidHome $androidHome
-$ndkHome = if ($ndkInfo) { $ndkInfo.Path } else { $null }
+Write-Host "[5/5] 配置环境变量" -ForegroundColor Cyan
 $platformTools = Join-Path $androidHome 'platform-tools'
 
 # 写入用户级环境变量（需要新开终端窗口才会影响新的 shell）
@@ -269,19 +232,12 @@ if ($androidHome) {
   Write-Warn "未检测到 ANDROID_HOME 版本，跳过 ANDROID_HOME 设置"
 }
 
-if ($ndkHome) {
-  Set-UserEnvIfChanged -Name 'ANDROID_NDK_HOME' -Value $ndkHome
-} else {
-  Write-Warn "未检测到 NDK 版本，跳过 ANDROID_NDK_HOME 设置"
-}
-
 if (-not (Add-UserPathSegment -Segment $platformTools)) {
   Write-Warn "set PATH = $env:Path;$platformTools (失败)"
 }
 
 # 同步到当前会话环境变量，便于脚本后续步骤/当前终端立即可用
 $env:ANDROID_HOME = $androidHome
-if ($ndkHome) { $env:ANDROID_NDK_HOME = $ndkHome }
 $env:Path = "$platformTools;$env:Path"
 Write-Ok "当前 shell 环境变量变更已生效（export）"
 
