@@ -40,6 +40,36 @@ function Sync-PathFromRegistry {
 
 <#
 .SYNOPSIS
+  判断 Gemfile.lock 锁定的 Bundler 版本是否与当前 bundle 版本不一致。
+.PARAMETER BundleRoot
+  含 Gemfile / Gemfile.lock 的目录。
+.OUTPUTS
+  [bool] 不一致返回 true；无 lockfile、无 BUNDLED WITH 段或版本相同返回 false。
+.NOTES
+  lockfile 末尾 BUNDLED WITH 下一行即生成时的 Bundler 版本；与当前不一致时
+  Bundler 会自动下载并切换到锁定版本重跑，故先对齐以避免无谓的旧版下载。
+#>
+function Test-LockfileBundlerMismatch {
+  param([Parameter(Mandatory)] [string]$BundleRoot)
+
+  $lockfile = Join-Path $BundleRoot 'Gemfile.lock'
+  if (-not (Test-Path -LiteralPath $lockfile)) { return $false }
+
+  $lines = Get-Content -LiteralPath $lockfile -ErrorAction SilentlyContinue
+  $idx = [Array]::FindIndex($lines, [Predicate[string]] { param($l) $l.Trim() -eq 'BUNDLED WITH' })
+  if ($idx -lt 0 -or $idx + 1 -ge $lines.Count) { return $false }
+  $lockedVersion = $lines[$idx + 1].Trim()
+  if ([string]::IsNullOrWhiteSpace($lockedVersion)) { return $false }
+
+  $currentVersion = (Invoke-NativeText -FilePath 'bundle' -Arguments @('--version') |
+    Select-Object -First 1) -replace '[^0-9.]', ''
+  if ([string]::IsNullOrWhiteSpace($currentVersion)) { return $false }
+
+  return ($lockedVersion -ne $currentVersion)
+}
+
+<#
+.SYNOPSIS
   确保 Gemfile 中声明的 fastlane 可通过 Bundler 使用。
 .OUTPUTS
   [bool] fastlane 可解析返回 true。
@@ -68,6 +98,20 @@ function Ensure-FastlaneBundle {
   Write-Ok "使用 Gemfile：$gemfile"
 
   if (-not $CheckOnly) {
+    # ① 配置 RubyGems 国内镜像（项目级，写入 $bundleRoot\.bundle\config，不污染全局）。
+    #    rubygems.org 国内访问慢，bundle install 拉 fastlane 一大堆依赖会非常慢甚至超时。
+    Write-Host '  配置 RubyGems 国内镜像（USTC）...' -ForegroundColor Cyan
+    Invoke-NativeIn -Path $bundleRoot -Block {
+      & bundle config set --local mirror.https://rubygems.org https://mirrors.ustc.edu.cn/rubygems
+    } | Out-Null
+
+    # ② 对齐 lockfile 的 BUNDLED WITH 与当前 Bundler 版本。
+    #    否则 Bundler 4.x 见到 lockfile 锁的 2.4.10 会去下载并切换到旧版重跑（慢且无谓）。
+    if (Test-LockfileBundlerMismatch -BundleRoot $bundleRoot) {
+      Write-Warn 'Gemfile.lock 的 Bundler 版本与当前不一致，正在对齐 ...'
+      Invoke-NativeIn -Path $bundleRoot -Block { & bundle update --bundler } | Out-Null
+    }
+
     $code = Invoke-NativeIn -Path $bundleRoot -Block { & bundle install }
     if ($code -ne 0) {
       Write-Fail 'bundle install 执行失败'
