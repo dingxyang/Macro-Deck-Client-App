@@ -7,8 +7,3 @@ export enum NavigationDestination {
   /** 连接丢失页面 */
   ConnectionLost
 }
-export enum NavigationDestination {
-  Home,
-  Deck,
-  ConnectionLost
-}

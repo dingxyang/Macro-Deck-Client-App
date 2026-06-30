@@ -5,7 +5,3 @@ export enum ButtonWidgetBorderStyle {
   /** 彩色边框 */
   Colored
 }
-export enum ButtonWidgetBorderStyle {
-  None,
-  Colored
-}

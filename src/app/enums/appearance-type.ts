@@ -7,8 +7,3 @@ export enum AppearanceType {
   /** 浅色主题 */
   Light = 2
 }
-export enum AppearanceType {
-  System = 0,
-  Dark = 1,
-  Light = 2
-}

@@ -5,7 +5,3 @@ export enum WidgetContentType {
     /** 按钮微件 */
     button = 100
 }
-export enum WidgetContentType {
-    empty = 0,
-    button = 100
-}

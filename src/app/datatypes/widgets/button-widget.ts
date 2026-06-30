@@ -7,9 +7,3 @@ export interface ButtonWidget extends WidgetContent {
     /** 按钮标签的 Base64 编码数据 */
     labelBase64: string | undefined
 }
-import {WidgetContent} from "./widget-content";
-
-export interface ButtonWidget extends WidgetContent {
-    iconBase64: string | undefined,
-    labelBase64: string | undefined
-}

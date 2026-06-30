@@ -3,6 +3,3 @@ export interface PingResponse {
   /** 服务器机器名称 */
   machineName: string;
 }
-export interface PingResponse {
-  machineName: string;
-}
