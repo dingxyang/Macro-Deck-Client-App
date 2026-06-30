@@ -11,6 +11,8 @@
 .PARAMETER Configuration
   Angular 构建配置（默认 web_production）。仅 build 命令使用。
   可用值：web_production | production | development。
+.PARAMETER Clean
+  构建前清除 Angular 构建缓存（.angular\cache）。遇到 TypeScript 编译缓存错误时使用。
 .PARAMETER Yes
   自动确认（静默模式）。
 #>
@@ -20,6 +22,8 @@ param(
   [string]$Command,
 
   [string]$Configuration = 'web_production',
+
+  [switch]$Clean,
 
   [Alias('y')]
   [switch]$Yes
@@ -125,13 +129,15 @@ function Assert-AjvV8([string]$ProjectRoot) {
 
 # ─── 无命令时输出用法 ─────────────────────────────────────────────────────────
 if ([string]::IsNullOrWhiteSpace($Command)) {
-  Write-Host "用法：$($MyInvocation.MyCommand.Name) <build|dev|check> [-Configuration <config>] [-y]" -ForegroundColor Cyan
+  Write-Host "用法：$($MyInvocation.MyCommand.Name) <build|dev|check> [-Configuration <config>] [-Clean] [-y]" -ForegroundColor Cyan
   Write-Host ""
   Write-Host "  build             构建 Web/PWA 产物（输出到 www\）"
   Write-Host "  dev               启动本地开发服务器（热重载，Ctrl+C 退出）"
   Write-Host "  check             仅检查环境，不执行构建"
   Write-Host "  -Configuration    Angular 构建配置（默认 web_production）"
   Write-Host "                    可选：web_production | production | development"
+  Write-Host "  -Clean            构建前清除 Angular 缓存（.angular\cache）"
+  Write-Host "                    遇到 TypeScript 编译缓存错误时使用"
   Write-Host "  -y                自动确认（静默模式）"
   exit 1
 }
@@ -197,6 +203,22 @@ if ($Command -eq 'dev') {
   exit $LASTEXITCODE
 }
 
+# ─── -Clean：清除 Angular 构建缓存 ───────────────────────────────────────────
+if ($Clean) {
+  $cacheDir = Join-Path $projectRoot '.angular\cache'
+  Write-Host "[可选] 清除 Angular 构建缓存" -ForegroundColor Cyan
+  if (Test-Path -LiteralPath $cacheDir) {
+    Write-Warn "正在删除 .angular\cache ..."
+    Invoke-NativeStreamIn -Path $projectRoot -Block { & npx ng cache clean }
+    if ($LASTEXITCODE -ne 0) { Write-Fail "ng cache clean 失败（exit code $LASTEXITCODE）"; exit 1 }
+    Write-Ok "Angular 构建缓存已清除"
+  }
+  else {
+    Write-Ok ".angular\cache 不存在，无需清除"
+  }
+  Write-Host ""
+}
+
 # ─── build：Web/PWA 生产构建 ─────────────────────────────────────────────────
 Write-Banner -Title "Web/PWA 构建（-c $Configuration）" -Color Cyan
 Write-Host ""
@@ -217,6 +239,10 @@ if ($code -eq 0) {
 else {
   Write-Host ""
   Write-Fail "ionic build 失败（exit code $code）"
+  if (-not $Clean) {
+    Write-Host "  提示：若报 TypeScript 编译缓存错误，请加 -Clean 参数重试：" -ForegroundColor Yellow
+    Write-Host "    .\build_web_bywin.ps1 build -Clean" -ForegroundColor Yellow
+  }
 }
 
 exit $code
