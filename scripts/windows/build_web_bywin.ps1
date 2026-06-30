@@ -174,12 +174,14 @@ Write-Host ""
 
 # ─── [准备 1/2] npm 依赖（node_modules 缺失时安装）──────────────────────────
 Write-Host "[准备 1/2] npm 依赖" -ForegroundColor Cyan
+$didInstall = $false
 if (-not (Test-Path -LiteralPath (Join-Path $projectRoot 'node_modules'))) {
   Write-Warn "node_modules 不存在，正在安装依赖 ..."
   Write-Host "  运行命令：npm install --legacy-peer-deps" -ForegroundColor Cyan
   Invoke-NativeStreamIn -Path $projectRoot -Block { & npm install --legacy-peer-deps }
   if ($LASTEXITCODE -ne 0) { Write-Fail "npm install 失败（exit code $LASTEXITCODE）"; exit 1 }
   Write-Ok "npm install 完成"
+  $didInstall = $true
 }
 else {
   Write-Ok "node_modules 已存在，跳过安装"
@@ -203,10 +205,14 @@ if ($Command -eq 'dev') {
   exit $LASTEXITCODE
 }
 
-# ─── -Clean：清除 Angular 构建缓存 ───────────────────────────────────────────
-if ($Clean) {
+# ─── 清除 Angular 构建缓存 ───────────────────────────────────────────────────
+# 触发条件：显式 -Clean，或本次刚跑过 npm install（重装后 webpack 缓存里的
+# TypeScript 程序状态会过期，导致 "main.ts is missing from the TypeScript
+# compilation" 报错，故重装后必须清缓存）。
+if ($Clean -or $didInstall) {
   $cacheDir = Join-Path $projectRoot '.angular\cache'
-  Write-Host "[可选] 清除 Angular 构建缓存" -ForegroundColor Cyan
+  $reason = if ($didInstall -and -not $Clean) { '（依赖刚重装，需清缓存避免编译报错）' } else { '' }
+  Write-Host "[清缓存] 清除 Angular 构建缓存$reason" -ForegroundColor Cyan
   if (Test-Path -LiteralPath $cacheDir) {
     Write-Warn "正在删除 .angular\cache ..."
     Invoke-NativeStreamIn -Path $projectRoot -Block { & npx ng cache clean }

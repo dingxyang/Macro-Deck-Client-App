@@ -8,6 +8,7 @@
     "ng": "ng",
     "start": "ng serve app --configuration development",
     "build": "ng build app --configuration development",
+    "build:web": "ng cache clean && ionic build -c web_production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test app",
     "lint": "ng lint app"
