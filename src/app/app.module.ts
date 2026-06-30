@@ -14,6 +14,8 @@ import {WebHomePageModule} from "./pages/web-home/web-home.module";
 import {HomePageModule} from "./pages/home/home.module";
 import {DeckPageModule} from "./pages/deck/deck.module";
 import {ConnectionLostPageModule} from "./pages/connection-lost/connection-lost.module";
+import {provideTranslateService} from "@ngx-translate/core";
+import {provideTranslateHttpLoader} from "@ngx-translate/http-loader";
 
 /** 应用根模块，配置所有导入的模块、组件和服务 */
 @NgModule({
@@ -36,7 +38,16 @@ import {ConnectionLostPageModule} from "./pages/connection-lost/connection-lost.
         AppComponent,
         SettingsModalComponent
     ],
-    providers: [],
+    providers: [
+        // 国际化：从 assets/i18n/{lang}.json 加载翻译，默认回退 en
+        provideTranslateService({
+            loader: provideTranslateHttpLoader({
+                prefix: './assets/i18n/',
+                suffix: '.json'
+            }),
+            fallbackLang: 'en'
+        })
+    ],
     bootstrap: [AppComponent],  // 以 AppComponent 作为启动组件
 })
 export class AppModule {

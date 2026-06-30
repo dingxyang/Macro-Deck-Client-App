@@ -1,16 +1,16 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()">Cancel</ion-button>
+      <ion-button (click)="cancel()">{{ 'common.cancel' | translate }}</ion-button>
     </ion-buttons>
     @if (editConnection) {
-      <ion-title>Edit connection</ion-title>
+      <ion-title>{{ 'addConnection.editTitle' | translate }}</ion-title>
     } @else {
-      <ion-title>Add connection</ion-title>
+      <ion-title>{{ 'addConnection.addTitle' | translate }}</ion-title>
     }
     @if (host.length > 0 && port > 1) {
       <ion-buttons slot="end">
-        <ion-button (click)="confirm()" [strong]="true">Confirm</ion-button>
+        <ion-button (click)="confirm()" [strong]="true">{{ 'common.confirm' | translate }}</ion-button>
       </ion-buttons>
     }
   </ion-toolbar>
@@ -21,10 +21,10 @@
     <div class="mb-3">
       <ion-segment [(ngModel)]="page" value="quick-setup">
         <ion-segment-button value="quick-setup">
-          <ion-label>Quick Setup</ion-label>
+          <ion-label>{{ 'addConnection.quickSetup' | translate }}</ion-label>
         </ion-segment-button>
         <ion-segment-button value="manual">
-          <ion-label>Manual Setup</ion-label>
+          <ion-label>{{ 'addConnection.manualSetup' | translate }}</ion-label>
         </ion-segment-button>
       </ion-segment>
     </div>
@@ -35,22 +35,22 @@
       <ng-template [ngTemplateOutlet]="generalConnectionInfo"/>
 
       <ion-item class="mt-2">
-        <ion-label slot="start">IP Address / Hostname</ion-label>
+        <ion-label slot="start">{{ 'addConnection.ipAddressHostname' | translate }}</ion-label>
         <ion-label slot="end">{{ host }}</ion-label>
       </ion-item>
 
       <ion-item>
-        <ion-label slot="start">Port</ion-label>
+        <ion-label slot="start">{{ 'addConnection.port' | translate }}</ion-label>
         <ion-label slot="end">{{ port }}</ion-label>
       </ion-item>
 
       <ion-item>
-        <ion-label slot="start">SSL</ion-label>
-        <ion-label slot="end">{{ useSsl ? "Yes" : "No" }}</ion-label>
+        <ion-label slot="start">{{ 'addConnection.ssl' | translate }}</ion-label>
+        <ion-label slot="end">{{ useSsl ? ('addConnection.yes' | translate) : ('addConnection.no' | translate) }}</ion-label>
       </ion-item>
 
       <div class="w-100 mt-4 d-flex justify-content-center">
-        <ion-button fill="outline" (click)="reset()">Reset</ion-button>
+        <ion-button fill="outline" (click)="reset()">{{ 'common.reset' | translate }}</ion-button>
       </div>
     } @else {
       <app-qr-code-scanner></app-qr-code-scanner>
@@ -60,18 +60,18 @@
 
     <ion-item class="mt-2">
       <ion-input labelPlacement="floating" type="text" [(ngModel)]="host" [clearInput]="true">
-        <div slot="label">IP Address / Hostname</div>
+        <div slot="label">{{ 'addConnection.ipAddressHostname' | translate }}</div>
       </ion-input>
     </ion-item>
 
     <ion-item>
       <ion-input min="1" labelPlacement="floating" type="number" [(ngModel)]="port">
-        <div slot="label">Port</div>
+        <div slot="label">{{ 'addConnection.port' | translate }}</div>
       </ion-input>
     </ion-item>
 
     <ion-item>
-      <ion-toggle [(ngModel)]="useSsl">Use SSL</ion-toggle>
+      <ion-toggle [(ngModel)]="useSsl">{{ 'addConnection.useSsl' | translate }}</ion-toggle>
     </ion-item>
   }
 </ion-content>
@@ -79,10 +79,10 @@
 <ng-template #generalConnectionInfo>
   <ion-item>
     <ion-input labelPlacement="floating" type="text" [placeholder]="host" [(ngModel)]="name" [clearInput]="true">
-      <div slot="label">Name</div>
+      <div slot="label">{{ 'addConnection.name' | translate }}</div>
     </ion-input>
   </ion-item>
   <ion-item>
-    <ion-toggle [(ngModel)]="autoConnect">Connect automatically</ion-toggle>
+    <ion-toggle [(ngModel)]="autoConnect">{{ 'addConnection.connectAutomatically' | translate }}</ion-toggle>
   </ion-item>
 </ng-template>

@@ -9,6 +9,9 @@ import {DiagnosticService} from "../../../../services/diagnostic/diagnostic.serv
 import {ThemeService} from "../../../../services/theme/theme.service";
 import {ButtonWidgetBorderStyle} from "../../../../widget-content-components/button-widget/button-widget-border-style";
 import {FormsModule} from "@angular/forms";
+import {TranslatePipe, TranslateService} from "@ngx-translate/core";
+import {I18nService} from "../../../../services/i18n/i18n.service";
+import {LanguageType} from "../../../../enums/language-type";
 
 /** 设置弹窗组件，提供应用各项配置的界面交互 */
 @Component({
@@ -17,7 +20,8 @@ import {FormsModule} from "@angular/forms";
   styleUrls: ['./settings-modal.component.scss'],
   imports: [
     IonicModule,
-    FormsModule
+    FormsModule,
+    TranslatePipe
   ]
 })
 export class SettingsModalComponent  implements OnInit {
@@ -47,6 +51,8 @@ export class SettingsModalComponent  implements OnInit {
   usbUseSsl: boolean = false;
   /** 按钮微件边框样式（字符串形式的枚举值） */
   buttonWidgetBorderStyle: string = "0";
+  /** 界面语言（字符串形式的枚举值） */
+  language: string = "0";
 
   constructor(private modalController: ModalController,
               private settingsService: SettingsService,
@@ -54,7 +60,9 @@ export class SettingsModalComponent  implements OnInit {
               private alertController: AlertController,
               private screenOrientationService: ScreenOrientationService,
               public diagnosticService: DiagnosticService,
-              private themeService: ThemeService) { }
+              private themeService: ThemeService,
+              private i18nService: I18nService,
+              private translate: TranslateService) { }
 
   /**
    * 组件初始化回调
@@ -93,6 +101,9 @@ export class SettingsModalComponent  implements OnInit {
     await this.settingsService.setUsbUseSsl(this.usbUseSsl);
     await this.settingsService.setButtonWidgetBorderStyle(Number.parseInt(this.buttonWidgetBorderStyle));
 
+    // 应用语言设置（即时生效 + 持久化）
+    await this.i18nService.setLanguage(Number.parseInt(this.language) as LanguageType);
+
     // 立即应用各项设置
     await this.wakelockService.updateWakeLock();
     await this.screenOrientationService.updateScreenOrientation();
@@ -114,6 +125,7 @@ export class SettingsModalComponent  implements OnInit {
     this.usbPort = await this.settingsService.getUsbPort();
     this.usbUseSsl = await this.settingsService.getUsbUseSsl();
     this.buttonWidgetBorderStyle = (await this.settingsService.getButtonWidgetBorderStyle()).toString();
+    this.language = (await this.settingsService.getLanguage()).toString();
   }
 
   /**
@@ -127,9 +139,9 @@ export class SettingsModalComponent  implements OnInit {
     }
 
     const alert = await this.alertController.create({
-      header: 'Warning',
-      message: 'Displaying a static image for a long time can cause screen burn-in on some screens.',
-      buttons: ['OK'],
+      header: this.translate.instant('common.warning'),
+      message: this.translate.instant('settings.screenBurnInWarning'),
+      buttons: [this.translate.instant('common.ok')],
     });
 
     await alert.present();
@@ -146,9 +158,9 @@ export class SettingsModalComponent  implements OnInit {
     }
 
     const alert = await this.alertController.create({
-      header: 'Information',
-      message: 'To access the menu, swipe from the left edge of the screen',
-      buttons: ['OK'],
+      header: this.translate.instant('common.information'),
+      message: this.translate.instant('settings.menuButtonHint'),
+      buttons: [this.translate.instant('common.ok')],
     });
 
     await alert.present();

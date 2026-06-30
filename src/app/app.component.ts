@@ -13,6 +13,7 @@ import {App, URLOpenListenerEvent} from "@capacitor/app";
 import {QuickSetupQrCodeData} from "./datatypes/quick-setup-qr-code-data";
 import {QrCodeScannerComponent} from "./pages/home/modals/add-connection/qr-code-scanner/qr-code-scanner.component";
 import {IonicModule} from "@ionic/angular";
+import {I18nService} from "./services/i18n/i18n.service";
 
 /** 应用根组件，负责初始化各项服务并监听深度链接 */
 @Component({
@@ -32,7 +33,8 @@ export class AppComponent implements OnInit {
               private screenOrientationService: ScreenOrientationService,
               private settingsService: SettingsService,
               private diagnosticService: DiagnosticService,
-              private themeService: ThemeService) {
+              private themeService: ThemeService,
+              private i18nService: I18nService) {
   }
 
   /** 根页面组件，Web 版本使用 WebHomePage，原生版本使用 HomePage */
@@ -40,11 +42,12 @@ export class AppComponent implements OnInit {
 
   /**
    * 应用初始化回调
-   * 初始化本地存储、屏幕方向、屏幕常亮、主题设置
+   * 初始化本地存储、语言、屏幕方向、屏幕常亮、主题设置
    * 并在 Android 平台上配置 SSL 证书验证跳过
    */
   async ngOnInit() {
     await this.storage.create();
+    await this.i18nService.init();
     await this.screenOrientationService.updateScreenOrientation();
     await this.wakeLockService.updateWakeLock();
     await this.themeService.updateTheme();

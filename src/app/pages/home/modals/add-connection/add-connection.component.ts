@@ -9,6 +9,7 @@ import {QrCodeScannerComponent} from "./qr-code-scanner/qr-code-scanner.componen
 import {ConnectionFailedComponent} from "../connection-failed/connection-failed.component";
 import {FormsModule} from "@angular/forms";
 import {NgTemplateOutlet} from "@angular/common";
+import {TranslatePipe, TranslateService} from "@ngx-translate/core";
 
 /** 新增/编辑连接弹窗组件，支持手动输入和二维码快速设置两种方式 */
 @Component({
@@ -19,7 +20,8 @@ import {NgTemplateOutlet} from "@angular/common";
     IonicModule,
     FormsModule,
     NgTemplateOutlet,
-    QrCodeScannerComponent
+    QrCodeScannerComponent,
+    TranslatePipe
   ]
 })
 export class AddConnectionComponent implements OnInit, OnDestroy {
@@ -49,7 +51,8 @@ export class AddConnectionComponent implements OnInit, OnDestroy {
 
   constructor(private modalController: ModalController,
               private alertController: AlertController,
-              private diagnosticService: DiagnosticService) {
+              private diagnosticService: DiagnosticService,
+              private translate: TranslateService) {
   }
 
   /** 组件销毁时取消所有订阅 */
@@ -105,13 +108,8 @@ export class AddConnectionComponent implements OnInit, OnDestroy {
       // 选择了可用的网络接口
       this.host = data;
       const alert = await this.alertController.create({
-        subHeader: `Network interface ${data} was selected!`,
-        buttons: [
-          {
-            text: 'Ok',
-            role: 'cancel'
-          }
-        ],
+        subHeader: this.translate.instant('addConnection.networkInterfaceSelected', { name: data }),
+        buttons: [{ text: this.translate.instant('common.ok'), role: 'cancel' }],
       });
       await alert.present();
       return;
@@ -123,7 +121,7 @@ export class AddConnectionComponent implements OnInit, OnDestroy {
         component: ConnectionFailedComponent,
         componentProps: {
           name: this.quickSetupQrCodeData.instanceName,
-          errorInformation: `Tried interfaces: ${this.quickSetupQrCodeData.networkInterfaces.join(", ")}\nPort: ${this.quickSetupQrCodeData.port}\nSSL: ${this.quickSetupQrCodeData.ssl ? "Yes" : "No"}`,
+          errorInformation: `Tried interfaces: ${this.quickSetupQrCodeData.networkInterfaces.join(", ")}\nPort: ${this.quickSetupQrCodeData.port}\nSSL: ${this.quickSetupQrCodeData.ssl ? this.translate.instant('addConnection.yes') : this.translate.instant('addConnection.no')}`,
         },
         presentingElement: await this.modalController.getTop()
       });
@@ -172,13 +170,12 @@ export class AddConnectionComponent implements OnInit, OnDestroy {
    */
   async validate(): Promise<boolean> {
     if (this.host === undefined || this.host.length === 0) {
-      await this.showErrorAlert("The IP Address / Hostname is required.");
+      await this.showErrorAlert(this.translate.instant('addConnection.ipRequired'));
       return false;
     } else if (this.port === undefined || this.port === null) {
-      await this.showErrorAlert("The port is required.");
+      await this.showErrorAlert(this.translate.instant('addConnection.portRequired'));
       return false;
     }
-
     return true;
   }
 
@@ -189,11 +186,7 @@ export class AddConnectionComponent implements OnInit, OnDestroy {
   async showErrorAlert(text: string) {
     const alert = await this.alertController.create({
       subHeader: text,
-      buttons: [
-        {
-          text: 'Ok'
-        }
-      ],
+      buttons: [{ text: this.translate.instant('common.ok') }],
     });
 
     await alert.present();

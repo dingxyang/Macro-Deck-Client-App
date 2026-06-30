@@ -2,7 +2,7 @@
   <ion-toolbar>
     <ion-title>Macro Deck</ion-title>
     <ion-buttons slot="primary">
-      <ion-button (click)="openSettings()">Settings</ion-button>
+      <ion-button (click)="openSettings()">{{ 'home.settings' | translate }}</ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
@@ -12,12 +12,12 @@
 <ion-content class="scanner-hide">
   @if (usbConnectionAvailable) {
     <ion-item-divider>
-      <ion-label>Wired connections</ion-label>
+      <ion-label>{{ 'home.wiredConnections' | translate }}</ion-label>
     </ion-item-divider>
     <ion-item button="true" (click)="connectUsb()">
       <ion-icon slot="start" class="mdi mdi-usb text-success d-flex align-items-center"></ion-icon>
       <ion-label>
-        <span class="fs-5">Connect via USB</span>
+        <span class="fs-5">{{ 'home.connectViaUsb' | translate }}</span>
       </ion-label>
       <ion-reorder slot="end"></ion-reorder>
     </ion-item>
@@ -25,7 +25,7 @@
 
   @if (usbConnectionAvailable) {
     <ion-item-divider>
-      <ion-label>Wireless connections</ion-label>
+      <ion-label>{{ 'home.wirelessConnections' | translate }}</ion-label>
     </ion-item-divider>
   }
 
@@ -56,7 +56,7 @@
                         <span class="d-flex gap-1 mt-2 fw-light">
                           @if (connection.ssl) {
                             <ion-icon aria-hidden="true"
-                              title="Secure connection"
+                              [title]="'home.secureConnection' | translate"
                               class="text-success"
                               name="lock-closed-outline"/>
                           }
@@ -79,11 +79,11 @@
             </ion-list>
           } @else {
             <div class="ion-padding d-flex flex-column">
-              <span class="d-block text-center">Click the button below to add your first connection!</span>
+              <span class="d-block text-center">{{ 'home.addFirstConnection' | translate }}</span>
               <div class="justify-content-center d-flex mt-3">
                 <ion-button (click)="openAddConnectionModal()" id="add-connection-button">
                   <ion-icon name="add"></ion-icon>
-                  <ion-label>Add connection</ion-label>
+                  <ion-label>{{ 'home.addConnection' | translate }}</ion-label>
                 </ion-button>
               </div>
             </div>
@@ -109,11 +109,11 @@
 
 <ion-footer>
   <ion-toolbar>
-    <ion-text class="ms-3">{{ version }} | Client ID: {{ clientId }}</ion-text>
+    <ion-text class="ms-3">{{ version }} | {{ 'home.clientId' | translate }}: {{ clientId }}</ion-text>
     @if (showDonateButton()) {
       <ion-buttons class="me-2" slot="primary">
         <ion-button (click)="openDonate()" fill="solid">
-          Donate
+          {{ 'home.donate' | translate }}
           <ion-icon slot="end" name="heart-outline"></ion-icon>
         </ion-button>
       </ion-buttons>

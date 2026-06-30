@@ -1,5 +1,6 @@
 import {Component, EventEmitter, OnInit} from '@angular/core';
 import {IonicModule} from "@ionic/angular";
+import {TranslatePipe} from "@ngx-translate/core";
 
 /** 二维码扫描 UI 组件，提供扫描界面的返回按钮交互 */
 @Component({
@@ -7,7 +8,8 @@ import {IonicModule} from "@ionic/angular";
   templateUrl: './qr-code-scanner-ui.component.html',
   styleUrls: ['./qr-code-scanner-ui.component.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
   ]
 })
 export class QrCodeScannerUiComponent {

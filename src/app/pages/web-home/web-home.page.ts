@@ -4,6 +4,7 @@ import { DOCUMENT } from "@angular/common";
 import {WebsocketService} from "../../services/websocket/websocket.service";
 import {environment} from "../../../environments/environment";
 import {IonicModule} from "@ionic/angular";
+import {TranslatePipe} from "@ngx-translate/core";
 
 /** Web 版首页组件，用于浏览器端直接连接同源的 Macro Deck 服务器 */
 @Component({
@@ -11,7 +12,8 @@ import {IonicModule} from "@ionic/angular";
   templateUrl: './web-home.page.html',
   styleUrls: ['./web-home.page.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
 ]
 })
 export class WebHomePage implements OnInit {

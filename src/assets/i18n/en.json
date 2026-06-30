@@ -1,0 +1,132 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "ok": "OK",
+    "confirm": "Confirm",
+    "details": "Details",
+    "information": "Information",
+    "warning": "Warning",
+    "yes": "Yes",
+    "no": "No",
+    "reset": "Reset",
+    "loading": "Loading..."
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "preventScreenTimeout": "Prevent screen timeout",
+    "skipSslValidation": "Skip SSL validation",
+    "buttonLongPressDelay": "Button long press delay",
+    "screenOrientation": "Screen orientation",
+    "notAvailable": "Not available",
+    "orientationAuto": "Auto",
+    "orientationLandscape": "Landscape",
+    "orientationLandscapeAlt": "Landscape alternative",
+    "orientationPortrait": "Portrait",
+    "appearance": "Appearance",
+    "showMenuButton": "Show menu button",
+    "appearanceSystem": "System",
+    "appearanceDark": "Dark",
+    "appearanceLight": "Light",
+    "buttonWidgetBorder": "Button widget border",
+    "borderNone": "None",
+    "borderColored": "Colored",
+    "usbSettings": "USB settings",
+    "usbAutoConnect": "Automatically connect",
+    "port": "Port",
+    "useSsl": "Use SSL",
+    "language": "Language",
+    "languageSystem": "System",
+    "languageEnglish": "English",
+    "languageChinese": "Chinese",
+    "screenBurnInWarning": "Displaying a static image for a long time can cause screen burn-in on some screens.",
+    "menuButtonHint": "To access the menu, swipe from the left edge of the screen"
+  },
+  "menu": {
+    "openFullScreen": "Open full screen",
+    "settings": "Settings",
+    "closeConnection": "Close connection"
+  },
+  "home": {
+    "settings": "Settings",
+    "wiredConnections": "Wired connections",
+    "connectViaUsb": "Connect via USB",
+    "wirelessConnections": "Wireless connections",
+    "secureConnection": "Secure connection",
+    "addFirstConnection": "Click the button below to add your first connection!",
+    "addConnection": "Add connection",
+    "clientId": "Client ID",
+    "donate": "Donate",
+    "deleteConnectionConfirm": "Delete the connection {{name}}?"
+  },
+  "addConnection": {
+    "editTitle": "Edit connection",
+    "addTitle": "Add connection",
+    "quickSetup": "Quick Setup",
+    "manualSetup": "Manual Setup",
+    "ipAddressHostname": "IP Address / Hostname",
+    "port": "Port",
+    "ssl": "SSL",
+    "yes": "Yes",
+    "no": "No",
+    "reset": "Reset",
+    "useSsl": "Use SSL",
+    "name": "Name",
+    "connectAutomatically": "Connect automatically",
+    "networkInterfaceSelected": "Network interface {{name}} was selected!",
+    "ipRequired": "The IP Address / Hostname is required.",
+    "portRequired": "The port is required."
+  },
+  "insecureConnection": {
+    "title": "Connection failed",
+    "heading": "I was able to connect but there were some problems ⚠️",
+    "body": "It seems like your browser blocks the connection because of security issues. This is caused by the client being accessed over a https connection and the server is not accessed wss. To solve this, allow insecure connections from https in your browser."
+  },
+  "connectionLostPage": {
+    "heading": "I lost the connection to the server",
+    "retryIn": "I'll try to reconnect in {{seconds}}...",
+    "retryNow": "Retry now"
+  },
+  "scanNetwork": {
+    "title": "Scanning networks...",
+    "multipleFound": "Multiple network interfaces were found. Tap on the correct network interface to apply it."
+  },
+  "qrScanner": {
+    "scanTitle": "Scan QR code",
+    "useQuickSetup": "Use Quick Setup to setup the connection",
+    "openOnComputer": "Open Macro Deck on your computer and scan the QR code",
+    "scanButton": "Scan QR code",
+    "permissionDenied": "Permission denied",
+    "cameraPermission": "Please grant camera permission to use the barcode scanner."
+  },
+  "webHome": {
+    "connectionLost": "I lost the connection to the server",
+    "retryIn": "I'll try to reconnect in {{seconds}}...",
+    "retryNow": "Retry now",
+    "clientId": "Client Id"
+  },
+  "connectionLost": {
+    "title": "Connection lost",
+    "heading": "I lost the connection to the server",
+    "subtext": "Maybe the server was stopped or the connection dropped."
+  },
+  "connectionFailed": {
+    "title": "Unable to connect to {{name}}",
+    "reasonsIntro": "There can be multiple reasons why this happens:",
+    "reasonAntivirus": "Your anti virus software or firewall blocks Macro Deck (Common issue)",
+    "reasonAdapter": "The wrong network adapter is chosen in the settings on the PC app",
+    "reasonPort": "The chosen port is used by another application",
+    "reasonNetwork": "Your computer and this device are not in the same network",
+    "reasonVpn": "If you're using VPN services, disable them",
+    "reasonRestart": "A restart of your computer can help sometimes",
+    "reasonWifi": "If you're using a 5GHz Wi-Fi connection, try to switch to 2,4GHz temporarily",
+    "reasonRouter": "Some routers block the communication between Ethernet and Wi-Fi. Check your router settings. Look for SSID isolation or AP isolation and disable it."
+  },
+  "connection": {
+    "connectingTo": "Connecting to {{name}}...",
+    "connectingToMacroDeck": "Connecting to Macro Deck...",
+    "connectingViaUsb": "Connecting via USB..."
+  }
+}

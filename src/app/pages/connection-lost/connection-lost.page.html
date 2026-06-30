@@ -2,12 +2,12 @@
   <div class="d-flex justify-content-center align-items-center align-content-center h-100">
     <div class="d-flex flex-column align-items-center">
       <div class="icon mb-2"></div>
-      <h4>I lost the connection to the server</h4>
-      <p>I'll try to reconnect in {{retryCountdown}}...</p>
+      <h4>{{ 'connectionLostPage.heading' | translate }} 🫤</h4>
+      <p>{{ 'connectionLostPage.retryIn' | translate:{ seconds: retryCountdown } }}</p>
 
       <div class="d-flex flex-row gap-3 mt-1">
-        <ion-button (click)="connect()">Retry now</ion-button>
-        <ion-button fill="outline" (click)="cancel()">Cancel</ion-button>
+        <ion-button (click)="connect()">{{ 'connectionLostPage.retryNow' | translate }}</ion-button>
+        <ion-button fill="outline" (click)="cancel()">{{ 'common.cancel' | translate }}</ion-button>
       </div>
     </div>
   </div>

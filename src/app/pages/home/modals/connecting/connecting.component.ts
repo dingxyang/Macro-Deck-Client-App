@@ -1,6 +1,7 @@
 import {Component, EventEmitter} from '@angular/core';
 import {IonicModule, ModalController} from "@ionic/angular";
 import {environment} from "../../../../../environments/environment";
+import {TranslatePipe} from "@ngx-translate/core";
 
 
 /** 连接中弹窗组件，显示连接进度并支持取消操作 */
@@ -9,7 +10,8 @@ import {environment} from "../../../../../environments/environment";
   templateUrl: './connecting.component.html',
   styleUrls: ['./connecting.component.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
 ]
 })
 export class ConnectingComponent {

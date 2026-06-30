@@ -3,6 +3,7 @@ import {Storage} from "@ionic/storage";
 import {ScreenOrientationType} from "../../enums/screen-orientation-type";
 import {AppearanceType} from "../../enums/appearance-type";
 import {ButtonWidgetBorderStyle} from "../../widget-content-components/button-widget/button-widget-border-style";
+import {LanguageType} from "../../enums/language-type";
 
 // 本地存储键名常量
 const clientIdStorageKey: string = "client_id";
@@ -18,6 +19,7 @@ const usbAutoConnectKey: string = "usb_auto_connect";
 const usbPortKey: string = "usb_port";
 const usbUseSslKey: string = "usb_use_ssl";
 const buttonWidgetBorderStyleKey: string = "button_widget_border_style";
+const languageKey: string = "language";
 
 /** 设置服务，管理应用各项配置的持久化存取 */
 @Injectable({
@@ -27,6 +29,22 @@ export class SettingsService {
 
 
   constructor(private storage: Storage) {
+  }
+
+  /**
+   * 设置界面语言
+   * @param language 语言类型
+   */
+  public async setLanguage(language: LanguageType) {
+    await this.storage.set(languageKey, language);
+  }
+
+  /**
+   * 获取界面语言
+   * @returns 默认 System（跟随系统）
+   */
+  public async getLanguage(): Promise<LanguageType> {
+    return await this.storage.get(languageKey) ?? LanguageType.System;
   }
 
   /**

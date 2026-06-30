@@ -24,6 +24,7 @@ import {QuickSetupQrCodeData} from "../../datatypes/quick-setup-qr-code-data";
 import {
   QrCodeScannerUiComponent
 } from "./modals/add-connection/qr-code-scanner/qr-code-scanner-ui/qr-code-scanner-ui.component";
+import {TranslatePipe, TranslateService} from "@ngx-translate/core";
 
 
 /** 首页组件，管理服务器连接列表、Ping 检测和连接操作 */
@@ -33,7 +34,8 @@ import {
   styleUrls: ['./home.page.scss'],
   imports: [
     IonicModule,
-    QrCodeScannerUiComponent
+    QrCodeScannerUiComponent,
+    TranslatePipe
   ]
 })
 export class HomePage implements OnInit, ViewWillEnter, ViewDidEnter, ViewDidLeave {
@@ -60,7 +62,8 @@ export class HomePage implements OnInit, ViewWillEnter, ViewDidEnter, ViewDidLea
               private alertController: AlertController,
               private websocketService: WebsocketService,
               private wakeLockService: WakelockService,
-              private pingService: PingService) {
+              private pingService: PingService,
+              private translate: TranslateService) {
   }
 
   /**
@@ -216,14 +219,14 @@ export class HomePage implements OnInit, ViewWillEnter, ViewDidEnter, ViewDidLea
    */
   async deleteConnection(connection: Connection) {
     const alert = await this.alertController.create({
-      subHeader: `Delete the connection ${connection.name}?`,
+      subHeader: this.translate.instant('home.deleteConnectionConfirm', { name: connection.name }),
       buttons: [
         {
-          text: 'No',
+          text: this.translate.instant('common.no'),
           role: 'cancel'
         },
         {
-          text: 'Yes',
+          text: this.translate.instant('common.yes'),
           role: 'confirm',
           handler: async () => {
             await this.connectionService.deleteConnection(connection.id);

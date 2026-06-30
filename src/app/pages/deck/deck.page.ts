@@ -9,6 +9,7 @@ import {DiagnosticService} from "../../services/diagnostic/diagnostic.service";
 import {NavigationService} from "../../services/navigation/navigation.service";
 import {NavigationDestination} from "../../enums/navigation-destination";
 import {WidgetGridComponent} from "./widget-grid/widget-grid.component";
+import {TranslatePipe} from "@ngx-translate/core";
 
 
 /** 控制面板页面组件，显示 Macro Deck 的按钮面板 */
@@ -18,7 +19,8 @@ import {WidgetGridComponent} from "./widget-grid/widget-grid.component";
   styleUrls: ['./deck.page.scss'],
   imports: [
     IonicModule,
-    WidgetGridComponent
+    WidgetGridComponent,
+    TranslatePipe
 ]
 })
 export class DeckPage implements ViewDidEnter {

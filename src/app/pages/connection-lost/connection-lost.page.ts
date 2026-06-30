@@ -5,6 +5,7 @@ import {Subscription} from "rxjs";
 import {NavigationService} from "../../services/navigation/navigation.service";
 import {NavigationDestination} from "../../enums/navigation-destination";
 import {IonicModule, ViewDidEnter, ViewDidLeave} from "@ionic/angular";
+import {TranslatePipe} from "@ngx-translate/core";
 
 /** 连接丢失页面组件，显示重试倒计时并自动尝试重新连接 */
 @Component({
@@ -12,7 +13,8 @@ import {IonicModule, ViewDidEnter, ViewDidLeave} from "@ionic/angular";
   templateUrl: './connection-lost.page.html',
   styleUrls: ['./connection-lost.page.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
   ]
 })
 export class ConnectionLostPage implements ViewDidEnter, ViewDidLeave {

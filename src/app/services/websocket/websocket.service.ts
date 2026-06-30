@@ -12,6 +12,7 @@ import {environment} from "../../../environments/environment";
 import {Connection} from "../../datatypes/connection";
 import {NavigationService} from "../navigation/navigation.service";
 import {NavigationDestination} from "../../enums/navigation-destination";
+import {TranslateService} from "@ngx-translate/core";
 
 /** WebSocket 通信服务，管理与 Macro Deck 服务器的实时连接 */
 @Injectable({
@@ -52,7 +53,8 @@ export class WebsocketService {
               private modalController: ModalController,
               private settingsService: SettingsService,
               private protocolHandlerService: ProtocolHandlerService,
-              private navigationService: NavigationService) {
+              private navigationService: NavigationService,
+              private translate: TranslateService) {
     this.subscribeOpenClose();
   }
 
@@ -66,9 +68,9 @@ export class WebsocketService {
     }
 
     if (connection.usbConnection) {
-      await this.loadingService.showLoading(`Connecting via USB...`);
+      await this.loadingService.showLoading(this.translate.instant('connection.connectingViaUsb'));
     } else {
-      await this.loadingService.showLoading(`Connecting to ${connection.name}...`);
+      await this.loadingService.showLoading(this.translate.instant('connection.connectingTo', { name: connection.name }));
     }
     // 根据是否启用 SSL 构建 WebSocket 地址
     this.url = `${connection.ssl ? "wss://" : "ws://"}${connection.host}:${connection.port}`;
@@ -82,7 +84,7 @@ export class WebsocketService {
    */
   public async connectToString(connectionString: string) {
     this.url = connectionString;
-    await this.loadingService.showLoading(`Connecting to Macro Deck...`);
+    await this.loadingService.showLoading(this.translate.instant('connection.connectingToMacroDeck'));
     await this.connect();
   }
 

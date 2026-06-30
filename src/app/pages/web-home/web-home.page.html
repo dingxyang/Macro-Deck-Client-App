@@ -3,9 +3,9 @@
     @if (connectionLost) {
       <div class="d-flex flex-column align-items-center">
         <div class="icon mb-2"></div>
-        <h4>I lost the connection to the server 🫤</h4>
-        <p>I'll try to reconnect in {{retryCountdown}}...</p>
-        <ion-button (click)="connect()" class="mt-5">Retry now</ion-button>
+        <h4>{{ 'webHome.connectionLost' | translate }} 🫤</h4>
+        <p>{{ 'webHome.retryIn' | translate:{ seconds: retryCountdown } }}</p>
+        <ion-button (click)="connect()" class="mt-5">{{ 'webHome.retryNow' | translate }}</ion-button>
       </div>
     }
   </div>
@@ -13,6 +13,6 @@
 
 <ion-footer>
   <ion-toolbar>
-    <ion-text class="ms-3">{{version}} | Client Id: {{clientId}}</ion-text>
+    <ion-text class="ms-3">{{version}} | {{ 'webHome.clientId' | translate }}: {{clientId}}</ion-text>
   </ion-toolbar>
 </ion-footer>

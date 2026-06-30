@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {IonicModule, ModalController} from "@ionic/angular";
+import {TranslatePipe} from "@ngx-translate/core";
 
 /** 连接丢失弹窗组件（首页模态弹窗版本） */
 @Component({
@@ -7,7 +8,8 @@ import {IonicModule, ModalController} from "@ionic/angular";
   templateUrl: './connection-lost.component.html',
   styleUrls: ['./connection-lost.component.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
   ]
 })
 export class ConnectionLostComponent {

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import {IonicModule, ModalController} from "@ionic/angular";
+import {TranslatePipe} from "@ngx-translate/core";
 
 /** 连接失败弹窗组件，显示连接错误信息 */
 @Component({
@@ -7,7 +8,8 @@ import {IonicModule, ModalController} from "@ionic/angular";
   templateUrl: './connection-failed.component.html',
   styleUrls: ['./connection-failed.component.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
   ]
 })
 export class ConnectionFailedComponent   {

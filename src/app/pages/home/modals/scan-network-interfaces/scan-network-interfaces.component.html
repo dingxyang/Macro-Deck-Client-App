@@ -1,12 +1,12 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Scanning networks...</ion-title>
+    <ion-title>{{ 'scanNetwork.title' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
   @if (!scanning && networkInterfacesAvailable.length > 1) {
-    <p class="ion-padding">Multiple network interfaces were found. Tap on the correct network interface to apply it.</p>
+    <p class="ion-padding">{{ 'scanNetwork.multipleFound' | translate }}</p>
   }
 
   @if (scanning) {
@@ -27,10 +27,7 @@
   } @else {
     <ion-list lines="full">
       @for (networkInterface of networkInterfacesAvailable; track networkInterface) {
-        <ion-item
-          button="true"
-          (click)="applyInterface(networkInterface)"
-          >
+        <ion-item button="true" (click)="applyInterface(networkInterface)">
           <ion-label>{{ networkInterface }}</ion-label>
           <ion-icon color="success" aria-hidden="true" name="checkmark-circle-outline" slot="end"></ion-icon>
         </ion-item>

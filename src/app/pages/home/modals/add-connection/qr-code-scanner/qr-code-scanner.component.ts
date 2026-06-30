@@ -3,6 +3,7 @@ import {AlertController, IonicModule, ModalController} from "@ionic/angular";
 import {BarcodeScanner, SupportedFormat} from "@capacitor-community/barcode-scanner";
 import {Subscription} from "rxjs";
 import {QrCodeScannerUiComponent} from "./qr-code-scanner-ui/qr-code-scanner-ui.component";
+import {TranslatePipe, TranslateService} from "@ngx-translate/core";
 
 /** 二维码扫描组件，使用设备摄像头扫描 Macro Deck 快速设置二维码 */
 @Component({
@@ -10,7 +11,8 @@ import {QrCodeScannerUiComponent} from "./qr-code-scanner-ui/qr-code-scanner-ui.
   templateUrl: './qr-code-scanner.component.html',
   styleUrls: ['./qr-code-scanner.component.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
   ]
 })
 export class QrCodeScannerComponent implements OnInit, OnDestroy {
@@ -21,7 +23,8 @@ export class QrCodeScannerComponent implements OnInit, OnDestroy {
   /** 事件订阅集合 */
   private subscription: Subscription = new Subscription();
 
-  constructor(private alertController: AlertController) {
+  constructor(private alertController: AlertController,
+              private translate: TranslateService) {
   }
 
   /**
@@ -88,9 +91,9 @@ export class QrCodeScannerComponent implements OnInit, OnDestroy {
    */
   async presentAlert(): Promise<void> {
     const alert = await this.alertController.create({
-      header: 'Permission denied',
-      message: 'Please grant camera permission to use the barcode scanner.',
-      buttons: ['OK'],
+      header: this.translate.instant('qrScanner.permissionDenied'),
+      message: this.translate.instant('qrScanner.cameraPermission'),
+      buttons: [this.translate.instant('common.ok')],
     });
     await alert.present();
   }

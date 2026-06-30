@@ -1,0 +1,132 @@
+{
+  "common": {
+    "cancel": "取消",
+    "save": "保存",
+    "close": "关闭",
+    "ok": "确定",
+    "confirm": "确认",
+    "details": "详情",
+    "information": "提示",
+    "warning": "警告",
+    "yes": "是",
+    "no": "否",
+    "reset": "重置",
+    "loading": "加载中..."
+  },
+  "settings": {
+    "title": "设置",
+    "general": "通用",
+    "preventScreenTimeout": "防止屏幕超时熄屏",
+    "skipSslValidation": "跳过 SSL 证书验证",
+    "buttonLongPressDelay": "按钮长按延迟",
+    "screenOrientation": "屏幕方向",
+    "notAvailable": "不可用",
+    "orientationAuto": "自动",
+    "orientationLandscape": "横屏",
+    "orientationLandscapeAlt": "横屏（反向）",
+    "orientationPortrait": "竖屏",
+    "appearance": "外观",
+    "showMenuButton": "显示菜单按钮",
+    "appearanceSystem": "跟随系统",
+    "appearanceDark": "深色",
+    "appearanceLight": "浅色",
+    "buttonWidgetBorder": "按钮微件边框",
+    "borderNone": "无",
+    "borderColored": "彩色",
+    "usbSettings": "USB 设置",
+    "usbAutoConnect": "自动连接",
+    "port": "端口",
+    "useSsl": "使用 SSL",
+    "language": "语言",
+    "languageSystem": "跟随系统",
+    "languageEnglish": "English",
+    "languageChinese": "中文",
+    "screenBurnInWarning": "长时间显示静态画面可能导致某些屏幕出现烧屏。",
+    "menuButtonHint": "从屏幕左侧边缘向右滑动即可打开菜单"
+  },
+  "menu": {
+    "openFullScreen": "全屏打开",
+    "settings": "设置",
+    "closeConnection": "关闭连接"
+  },
+  "home": {
+    "settings": "设置",
+    "wiredConnections": "有线连接",
+    "connectViaUsb": "通过 USB 连接",
+    "wirelessConnections": "无线连接",
+    "secureConnection": "安全连接",
+    "addFirstConnection": "点击下方按钮添加你的第一个连接！",
+    "addConnection": "添加连接",
+    "clientId": "客户端 ID",
+    "donate": "捐赠",
+    "deleteConnectionConfirm": "确定删除连接 {{name}} 吗？"
+  },
+  "addConnection": {
+    "editTitle": "编辑连接",
+    "addTitle": "添加连接",
+    "quickSetup": "快速设置",
+    "manualSetup": "手动设置",
+    "ipAddressHostname": "IP 地址 / 主机名",
+    "port": "端口",
+    "ssl": "SSL",
+    "yes": "是",
+    "no": "否",
+    "reset": "重置",
+    "useSsl": "使用 SSL",
+    "name": "名称",
+    "connectAutomatically": "自动连接",
+    "networkInterfaceSelected": "已选择网络接口 {{name}}！",
+    "ipRequired": "必须填写 IP 地址 / 主机名。",
+    "portRequired": "必须填写端口。"
+  },
+  "insecureConnection": {
+    "title": "连接失败",
+    "heading": "已能连接，但出现了一些问题 ⚠️",
+    "body": "看起来你的浏览器因安全问题拦截了连接。这是因为客户端通过 https 访问，而服务器未使用 wss。要解决此问题，请在浏览器中允许来自 https 的不安全连接。"
+  },
+  "connectionLostPage": {
+    "heading": "与服务器的连接已断开",
+    "retryIn": "将在 {{seconds}} 秒后重试连接...",
+    "retryNow": "立即重试"
+  },
+  "scanNetwork": {
+    "title": "正在扫描网络...",
+    "multipleFound": "发现多个网络接口。请点击正确的网络接口以应用它。"
+  },
+  "qrScanner": {
+    "scanTitle": "扫描二维码",
+    "useQuickSetup": "使用快速设置来配置连接",
+    "openOnComputer": "在电脑上打开 Macro Deck 并扫描二维码",
+    "scanButton": "扫描二维码",
+    "permissionDenied": "权限被拒绝",
+    "cameraPermission": "请授予相机权限以使用二维码扫描器。"
+  },
+  "webHome": {
+    "connectionLost": "与服务器的连接已断开",
+    "retryIn": "将在 {{seconds}} 秒后重试连接...",
+    "retryNow": "立即重试",
+    "clientId": "客户端 ID"
+  },
+  "connectionLost": {
+    "title": "连接已断开",
+    "heading": "与服务器的连接已断开",
+    "subtext": "服务器可能已停止，或连接已中断。"
+  },
+  "connectionFailed": {
+    "title": "无法连接到 {{name}}",
+    "reasonsIntro": "出现这种情况可能有多种原因：",
+    "reasonAntivirus": "你的杀毒软件或防火墙拦截了 Macro Deck（常见问题）",
+    "reasonAdapter": "PC 端设置中选择了错误的网络适配器",
+    "reasonPort": "所选端口被其他应用占用",
+    "reasonNetwork": "你的电脑与本设备不在同一网络",
+    "reasonVpn": "如果你在使用 VPN，请先关闭",
+    "reasonRestart": "重启电脑有时能解决问题",
+    "reasonWifi": "如果你使用 5GHz Wi-Fi，请尝试暂时切换到 2.4GHz",
+    "reasonRouter": "某些路由器会阻止有线与 Wi-Fi 之间的通信。请检查路由器设置，找到 SSID 隔离或 AP 隔离并关闭它。"
+  },
+  "connection": {
+    "connectingTo": "正在连接到 {{name}}...",
+    "connectingToMacroDeck": "正在连接到 Macro Deck...",
+    "connectingViaUsb": "正在通过 USB 连接..."
+  }
+}

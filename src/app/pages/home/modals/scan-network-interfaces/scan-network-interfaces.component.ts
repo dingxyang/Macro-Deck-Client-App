@@ -4,6 +4,7 @@ import {HttpClient} from "@angular/common/http";
 import {catchError, firstValueFrom, of, timeout} from "rxjs";
 import {IonicModule, ModalController} from "@ionic/angular";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {TranslatePipe} from "@ngx-translate/core";
 
 
 /** 网络接口扫描组件，逐个检测二维码中的网络接口地址是否可达 */
@@ -12,7 +13,8 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
   templateUrl: './scan-network-interfaces.component.html',
   styleUrls: ['./scan-network-interfaces.component.scss'],
   imports: [
-    IonicModule
+    IonicModule,
+    TranslatePipe
   ]
 })
 export class ScanNetworkInterfacesComponent implements AfterViewInit {
