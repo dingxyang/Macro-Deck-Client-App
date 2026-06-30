@@ -41,19 +41,19 @@ function Require-Fastlane {
 
   $hint = @'
 
-Install fastlane before building Android release artifacts.
+构建 Android release 产物前，请先安装 fastlane。
 
-Recommended on Windows:
-  1. Run scripts\windows.bak\install_2_ruby_bywin.ps1
-  2. Run scripts\windows.bak\install_3_fastlane_bywin.ps1
-  3. Reopen PowerShell if Ruby was just installed
+Windows 推荐方式：
+  1. 运行 scripts\windows.bak\install_2_ruby_bywin.ps1
+  2. 运行 scripts\windows.bak\install_3_fastlane_bywin.ps1
+  3. 如果刚安装了 Ruby，请重新打开 PowerShell
 
-Manual setup:
-  1. Install Ruby 3.0+ from https://rubyinstaller.org/
+手动安装：
+  1. 从 https://rubyinstaller.org/ 安装 Ruby 3.0+
   2. gem install bundler
   3. bundle install
 '@
-  Write-Fail 'Missing required command: fastlane'
+  Write-Fail '缺少必需命令: fastlane'
   Write-Host $hint
   return $false
 }
@@ -93,7 +93,7 @@ function Require-AndroidReleaseEnv {
   }
 
   if (-not (Test-Path -LiteralPath $env:KEYSTORE_FILE_PATH)) {
-    Write-Fail "Keystore file does not exist: $env:KEYSTORE_FILE_PATH"
+    Write-Fail "Keystore 文件不存在: $env:KEYSTORE_FILE_PATH"
     Print-AndroidSigningHelp -SigningFile $signingFile -DefaultKeystore $defaultKeystore -DefaultAlias $defaultAlias
     return $false
   }
@@ -101,7 +101,7 @@ function Require-AndroidReleaseEnv {
   return $true
 }
 
-Write-Banner 'Build Android release'
+Write-Banner '构建 Android release'
 
 Load-AndroidSigningPs1 -FilePath $signingFile
 
@@ -120,7 +120,7 @@ Write-Ok "KEYSTORE_FILE_PATH=$env:KEYSTORE_FILE_PATH"
 Write-Ok "KEYSTORE_FILE_ALIAS=$env:KEYSTORE_FILE_ALIAS"
 
 if ($Check) {
-  Write-Ok 'Android release environment checks passed'
+  Write-Ok 'Android release 环境检查通过'
   exit 0
 }
 
@@ -129,12 +129,12 @@ Invoke-CapSync 'android'
 
 $androidDir = Join-Path $script:RootDir 'android'
 $fastlane = Get-FastlaneCommand
-Write-Host "  $($fastlane.Display) build" -ForegroundColor Cyan
+Write-Host "  $($fastlane.Display) 构建" -ForegroundColor Cyan
 $fastlaneCommand = $fastlane.Command
 $fastlaneArguments = @($fastlane.Arguments + @('build'))
 $code = Invoke-NativeIn -Path $androidDir -Block { & $fastlaneCommand @fastlaneArguments }
 if ($code -ne 0) { exit $code }
 
-Write-Ok "Android release APK: $script:RootDir\android\app\build\outputs\apk\release\app-release.apk"
-Write-Ok "Android release AAB: $script:RootDir\android\app\build\outputs\bundle\release\app-release.aab"
+Write-Ok "Android release APK 产物: $script:RootDir\android\app\build\outputs\apk\release\app-release.apk"
+Write-Ok "Android release AAB 产物: $script:RootDir\android\app\build\outputs\bundle\release\app-release.aab"
 exit 0

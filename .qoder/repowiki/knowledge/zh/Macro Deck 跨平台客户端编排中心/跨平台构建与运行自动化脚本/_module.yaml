@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: scripts
-title: 跨平台构建与开发工作流自动化
+title: 跨平台构建与运行自动化脚本
 scope:
     - scripts/
 source_files: []

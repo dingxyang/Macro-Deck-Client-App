@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-06-30T15:06:37Z"
+exported_at: "2026-06-30T15:37:23Z"
 modules:
     "":
-        dir_name: Macro Deck 跨平台客户端与自动化交付体系
-        title: Macro Deck 跨平台客户端与自动化交付体系
+        dir_name: Macro Deck 跨平台客户端编排中心
+        title: Macro Deck 跨平台客户端编排中心
         scope:
             - README.md
             - package.json
@@ -476,8 +476,8 @@ modules:
         depends_on: []
         related_to: []
     scripts:
-        dir_name: 跨平台构建与开发工作流自动化
-        title: 跨平台构建与开发工作流自动化
+        dir_name: 跨平台构建与运行自动化脚本
+        title: 跨平台构建与运行自动化脚本
         scope:
             - scripts/
         source_files: []
