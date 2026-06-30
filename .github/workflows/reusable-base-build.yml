@@ -23,8 +23,6 @@ jobs:
         uses: Macro-Deck-App/Actions/setup-ionic@main
       - name: "Build Ionic app"
         run: ionic build -c production
-      - name: "Sync iOS project"
-        run: cap sync ios
       - name: "Sync Android project"
         run: cap sync android
       - name: Generate artifact name
@@ -46,30 +44,10 @@ jobs:
           path: node_modules/
           if-no-files-found: error
           retention-days: 1
-      - name: Upload ios artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.meta.outputs.artifact_name }}-ios
-          path: ios/
-          if-no-files-found: error
-          retention-days: 1
       - name: Upload android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.meta.outputs.artifact_name }}-android
           path: android/
-          if-no-files-found: error
-          retention-days: 1
-      - name: "Clean up app build"
-        run: rm -rf www
-      - name: "Build web client"
-        run: |
-          ionic build -c web_production
-          cd www && zip -r web-client.zip .
-      - name: Upload web client artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.meta.outputs.artifact_name }}-web-client
-          path: www/web-client.zip
           if-no-files-found: error
           retention-days: 1
