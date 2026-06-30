@@ -139,11 +139,25 @@ function Ensure-FastlaneBundle {
     # 选一个当前可连通的 RubyGems 国内镜像。
     $mirror = Select-GemMirror
 
+    # 先清除可能残留的 mirror 配置（早期版本曾用 bundle config mirror 写入 .bundle/config）。
+    # 残留的 BUNDLE_MIRROR__* 会让 Bundler 进入 mirror 兼容模式、改走旧式 dependency API
+    # (rubygems.org/v1/dependencies -> 回落 api.rubygems.org)，反而绕开下面改写的 source。
+    # unset 后才能让“改写 source 指向镜像”真正生效（走 compact index）。
+    Invoke-NativeIn -Path $bundleRoot -Block {
+      & bundle config unset --local mirror.https://rubygems.org 2>$null
+    } | Out-Null
+    $bundleConfig = Join-Path $bundleRoot '.bundle\config'
+    if (Test-Path -LiteralPath $bundleConfig) {
+      # bundle config unset 对带 fallback_timeout 等后缀的键清理不彻底，直接按行剔除所有 MIRROR 项。
+      $kept = Get-Content -LiteralPath $bundleConfig | Where-Object { $_ -notmatch 'BUNDLE_MIRROR__' }
+      Set-Content -LiteralPath $bundleConfig -Value $kept
+    }
+
     # 关键：必须改写 Gemfile 的 source，而不是用 bundle config mirror。
     # 原因：mirror 配置只重定向 source 的 specs 拉取，但 Bundler 的依赖解析走的是
     # 独立的 compact index / dependency API（api.rubygems.org），mirror 拦不住它，
     # 国内直连 api.rubygems.org 会超时（实测如此）。把 source 直接指向镜像，
-    # 整个解析（versions/info/names 三端点）都走镜像，根本不碰 api.rubygems.org。
+    # 整个解析（versions/info 端点）都走镜像，根本不碰 api.rubygems.org。
     # Gemfile 是入库文件，source 不能永久改，故 try/finally 用后即恢复。
     $gemfileBackup = $null
     if ($mirror) {
