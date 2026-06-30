@@ -77,13 +77,13 @@ end
 
 **图表来源**
 - [scripts/windows/_common.ps1:1-1114](file://scripts/windows/_common.ps1#L1-L1114)
-- [scripts/windows/build_web_bywin.ps1:1-223](file://scripts/windows/build_web_bywin.ps1#L1-L223)
+- [scripts/windows/build_web_bywin.ps1:1-255](file://scripts/windows/build_web_bywin.ps1#L1-L255)
 - [scripts/windows/build_windows_bywin.ps1:1-229](file://scripts/windows/build_windows_bywin.ps1#L1-L229)
 - [scripts/windows/build_android_bywin.ps1:1-475](file://scripts/windows/build_android_bywin.ps1#L1-L475)
 
 **章节来源**
 - [scripts/windows/_common.ps1:1-1114](file://scripts/windows/_common.ps1#L1-L1114)
-- [scripts/windows/build_web_bywin.ps1:1-223](file://scripts/windows/build_web_bywin.ps1#L1-L223)
+- [scripts/windows/build_web_bywin.ps1:1-255](file://scripts/windows/build_web_bywin.ps1#L1-L255)
 - [scripts/windows/build_windows_bywin.ps1:1-229](file://scripts/windows/build_windows_bywin.ps1#L1-L229)
 - [scripts/windows/build_android_bywin.ps1:1-475](file://scripts/windows/build_android_bywin.ps1#L1-L475)
 
@@ -282,7 +282,7 @@ WebBuild --> NPM
 
 **图表来源**
 - [scripts/windows/_common.ps1:1-1114](file://scripts/windows/_common.ps1#L1-L1114)
-- [scripts/windows/build_web_bywin.ps1:1-223](file://scripts/windows/build_web_bywin.ps1#L1-L223)
+- [scripts/windows/build_web_bywin.ps1:1-255](file://scripts/windows/build_web_bywin.ps1#L1-L255)
 - [scripts/windows/build_windows_bywin.ps1:1-229](file://scripts/windows/build_windows_bywin.ps1#L1-L229)
 - [scripts/windows/build_android_bywin.ps1:1-475](file://scripts/windows/build_android_bywin.ps1#L1-L475)
 
@@ -409,7 +409,7 @@ StatusReport --> End([卸载完成])
 - [scripts/windows/remove_3_c_compile_bywin.ps1:24-95](file://scripts/windows/remove_3_c_compile_bywin.ps1#L24-L95)
 
 **章节来源**
-- [scripts/windows/build_web_bywin.ps1:1-223](file://scripts/windows/build_web_bywin.ps1#L1-L223)
+- [scripts/windows/build_web_bywin.ps1:1-255](file://scripts/windows/build_web_bywin.ps1#L1-L255)
 - [scripts/windows/install_4_android_sdk_bywin.ps1:1-293](file://scripts/windows/install_4_android_sdk_bywin.ps1#L1-L293)
 - [scripts/windows/remove_1_android_sdk_bywin.ps1:1-225](file://scripts/windows/remove_1_android_sdk_bywin.ps1#L1-L225)
 - [scripts/windows/remove_2_rust_bywin.ps1:1-85](file://scripts/windows/remove_2_rust_bywin.ps1#L1-L85)

@@ -3,11 +3,11 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-06-30T08:44:24Z"
+exported_at: "2026-06-30T09:14:44Z"
 modules:
     "":
-        dir_name: Macro Deck 跨平台客户端编排中心
-        title: Macro Deck 跨平台客户端编排中心
+        dir_name: Macro Deck 跨平台客户端与发布编排
+        title: Macro Deck 跨平台客户端与发布编排
         scope:
             - README.md
             - package.json
