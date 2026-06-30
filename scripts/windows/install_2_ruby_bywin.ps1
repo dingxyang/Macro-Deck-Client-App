@@ -23,6 +23,24 @@ $ErrorActionPreference = 'Stop'
 
 <#
 .SYNOPSIS
+  从注册表重新读取 机器级 + 用户级 PATH，合并注入当前 PowerShell 会话。
+.NOTES
+  RubyInstaller 的 modpath 任务把 ruby\bin 写入用户 PATH（注册表），但当前会话的
+  $env:Path 是进程启动时的快照、不会自动刷新。调用本函数后，新安装软件即可在
+  当前会话被 Get-Command 发现，无需重开窗口。
+#>
+function Sync-PathFromRegistry {
+  $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+  $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+  $merged = @($machinePath, $userPath |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ';'
+  if (-not [string]::IsNullOrWhiteSpace($merged)) {
+    $env:Path = $merged
+  }
+}
+
+<#
+.SYNOPSIS
   读取当前 ruby.exe 的语义化版本号。
 .OUTPUTS
   [version] Ruby 版本；未找到 ruby 或无法解析时返回 null。
@@ -102,8 +120,22 @@ function Ensure-Ruby {
   }
 
   Write-Ok 'RubyInstaller-DevKit 安装完成'
-  Write-Warn '安装器已将 Ruby 写入用户 PATH；如当前窗口仍找不到 ruby，请重新打开 PowerShell 后再运行本脚本。'
-  return $true
+
+  # 安装器把 ruby/gem 写入的是「用户 PATH（注册表）」，但当前 PowerShell 会话的
+  # PATH 是启动时的快照，不会自动刷新——若不处理，紧接着的 Ensure-Bundler 调用
+  # gem 必然报「缺少必要命令：gem」。这里从注册表重读 PATH 注入当前会话，争取一次跑通。
+  Sync-PathFromRegistry
+  if (Get-CommandPath 'ruby') {
+    $newVer = Get-RubyVersion
+    Write-Ok "已在当前会话载入 Ruby $newVer"
+    return $true
+  }
+
+  # 刷新后当前会话仍找不到 ruby（少数环境注册表广播延迟），给出明确指引而非含糊报错。
+  Write-Warn 'Ruby 已安装成功，但当前 PowerShell 会话尚未载入它。'
+  Write-Warn '请关闭并重新打开 PowerShell，然后再次运行本脚本以继续安装 Bundler：'
+  Write-Host '    .\install_2_ruby_bywin.ps1' -ForegroundColor Cyan
+  return $false
 }
 
 <#
