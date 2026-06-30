@@ -51,9 +51,9 @@ function Ensure-Ruby {
   }
 
   if ($version) {
-    Write-Warn "Ruby $version was found; RubyInstaller recommends Ruby+Devkit 4.0.x (x64)"
+    Write-Warn "检测到 Ruby $version；RubyInstaller 推荐使用 Ruby+Devkit 4.0.x (x64)"
   } else {
-    Write-Warn 'Ruby was not found'
+    Write-Warn '未检测到 Ruby'
   }
 
   if ($CheckOnly) { return $false }
@@ -66,14 +66,14 @@ function Ensure-Ruby {
 
   foreach ($pkg in $packages) {
     if (Install-WingetPackage -Id $pkg.Id -Name $pkg.Name) {
-      Write-Warn 'If ruby is still unavailable, reopen PowerShell and rerun this script.'
+      Write-Warn '如果 ruby 仍不可用，请重新打开 PowerShell 并再次运行本脚本。'
       return $true
     }
-    Write-Warn "$($pkg.Name) was not installed; trying next RubyInstaller package."
+    Write-Warn "$($pkg.Name) 未安装；尝试下一个 RubyInstaller 安装包。"
   }
 
   Write-Host ''
-  Write-Host 'Manual install: https://rubyinstaller.org/downloads/'
+  Write-Host '手动安装地址：https://rubyinstaller.org/downloads/'
   return $false
 }
 
@@ -87,12 +87,12 @@ function Ensure-Ruby {
 #>
 function Ensure-Bundler {
   if (Get-CommandPath 'bundle') {
-    Write-Ok 'Bundler is installed'
+    Write-Ok 'Bundler 已安装'
     return $true
   }
 
   if ($CheckOnly) {
-    Write-Warn 'Bundler was not found'
+    Write-Warn '未检测到 Bundler'
     return $false
   }
 
@@ -101,11 +101,11 @@ function Ensure-Bundler {
   return (Require-Command 'bundle')
 }
 
-Write-Banner 'Ruby and Bundler'
+Write-Banner 'Ruby 与 Bundler'
 
 $ready = $true
 if (-not (Ensure-Ruby)) { $ready = $false }
 if ($ready -and -not (Ensure-Bundler)) { $ready = $false }
 
 if (-not $ready) { exit 1 }
-Write-Ok 'Ruby and Bundler are ready'
+Write-Ok 'Ruby 与 Bundler 已就绪'
