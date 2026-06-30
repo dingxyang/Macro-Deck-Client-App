@@ -52,34 +52,36 @@ Web:
 scripts\windows\build-web.cmd
 ```
 
-Android debug APK:
-
-```bash
-./scripts/unix/build-android-debug-apk.sh
-```
-
-```cmd
-scripts\windows\build-android-debug-apk.cmd
-```
-
 Android signed release APK and AAB:
 
 ```bash
-export BUILD_NUMBER=3001
-export VERSION_NUMBER=3.0.0
-export KEYSTORE_FILE_PATH=/path/to/keystore.jks
-export KEYSTORE_FILE_PASSWORD=your_password
-export KEYSTORE_FILE_ALIAS=your_alias
-./scripts/unix/build-android-release.sh
+cp scripts/local/android-signing.env.example scripts/local/android-signing.env
+vim scripts/local/android-signing.env
+./scripts/unix/build-android.sh
+```
+
+At minimum, set `KEYSTORE_FILE_PASSWORD` in `scripts/local/android-signing.env`. The Unix script defaults to `~/keystore/macro-deck-client-keystore.jks`, alias `macro-deck-client`, and the current Android `versionCode`/`versionName`. Override them in the same file only when needed:
+
+```bash
+BUILD_NUMBER=3001
+VERSION_NUMBER=3.0.0
+KEYSTORE_FILE_PATH=/path/to/keystore.jks
+KEYSTORE_FILE_ALIAS=your_alias
 ```
 
 ```cmd
-set BUILD_NUMBER=3001
-set VERSION_NUMBER=3.0.0
-set KEYSTORE_FILE_PATH=C:\path\to\keystore.jks
-set KEYSTORE_FILE_PASSWORD=your_password
-set KEYSTORE_FILE_ALIAS=your_alias
-scripts\windows\build-android-release.cmd
+copy scripts\local\android-signing.cmd.example scripts\local\android-signing.cmd
+notepad scripts\local\android-signing.cmd
+scripts\windows\build-android.cmd
+```
+
+At minimum, set `KEYSTORE_FILE_PASSWORD` in `scripts\local\android-signing.cmd`. The Windows script defaults to `%USERPROFILE%\keystore\macro-deck-client-keystore.jks`, alias `macro-deck-client`, and the current Android `versionCode`/`versionName`. Override them in the same file only when needed:
+
+```cmd
+set "BUILD_NUMBER=3001"
+set "VERSION_NUMBER=3.0.0"
+set "KEYSTORE_FILE_PATH=C:\path\to\keystore.jks"
+set "KEYSTORE_FILE_ALIAS=your_alias"
 ```
 
 iOS IPA:

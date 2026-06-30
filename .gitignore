@@ -69,6 +69,12 @@ yarn.lock
 /ios/vendor/
 /android/fastlane/metadata/**/*
 
+# Local signing secrets
+/scripts/local/android-signing.env
+/scripts/local/android-signing.cmd
+*.jks
+*.keystore
+
 /android/vendor/**/*
 capacitor_plugins/**/*
 capacitor_plugins/sslhandler/**/*
