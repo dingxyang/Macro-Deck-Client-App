@@ -11,10 +11,3 @@ export interface QuickSetupQrCodeData {
   /** 认证令牌 */
   token: string
 }
-export interface QuickSetupQrCodeData {
-  instanceName: string
-  networkInterfaces: string[]
-  port: number
-  ssl: boolean,
-  token: string
-}

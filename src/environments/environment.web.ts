@@ -7,8 +7,3 @@ export const environment = {
   /** 应用版本号 */
   version: "3.0.0",
 };
-export const environment = {
-  production: false,
-  webVersion: true,
-  version: "3.0.0",
-};

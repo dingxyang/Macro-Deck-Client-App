@@ -8,10 +8,3 @@ export interface WidgetInteraction {
     /** 交互类型（如按下、长按等） */
     widgetInteractionType: WidgetInteractionType
 }
-import {WidgetInteractionType} from "../../enums/widget-interaction-type";
-import {Widget} from "./widget";
-
-export interface WidgetInteraction {
-    widget: Widget,
-    widgetInteractionType: WidgetInteractionType
-}

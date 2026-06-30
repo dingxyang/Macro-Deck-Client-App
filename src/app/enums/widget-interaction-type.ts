@@ -9,9 +9,3 @@ export enum WidgetInteractionType {
     /** 按钮长按释放 */
     ButtonLongPressRelease = 1011
 }
-export enum WidgetInteractionType {
-    ButtonPress = 1000,
-    ButtonShortPressRelease = 1001,
-    ButtonLongPress = 1010,
-    ButtonLongPressRelease = 1011
-}

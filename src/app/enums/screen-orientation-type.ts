@@ -11,10 +11,3 @@ export enum ScreenOrientationType {
   /** 竖屏（反向） */
   PortraitAlt = 4
 }
-export enum ScreenOrientationType {
-  Auto = 0,
-  Landscape = 1,
-  LandscapeAlt = 2,
-  Portrait = 3,
-  PortraitAlt = 4
-}

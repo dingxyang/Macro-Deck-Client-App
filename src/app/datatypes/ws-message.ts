@@ -5,7 +5,3 @@ export interface WsMessage {
   /** 消息正文内容 */
   content: string;
 }
-export interface WsMessage {
-  source: string;
-  content: string;
-}
